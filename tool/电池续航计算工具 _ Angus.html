@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<!-- saved from url=(0179)file:///C:/Users/admin/AppData/Local/Temp/MicrosoftEdgeDownloads/626e1959-c64e-4601-9944-0d836356e7f8/%E7%94%B5%E6%B1%A0%E7%BB%AD%E8%88%AA%E8%AE%A1%E7%AE%97%E5%B7%A5%E5%85%B7.html -->
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>电池续航计算工具 | Angus</title>
+  <!-- 外部资源 -->
+  <script src="./电池续航计算工具 _ Angus_files/saved_resource"></script>
+  <link href="./电池续航计算工具 _ Angus_files/font-awesome.min.css" rel="stylesheet">
+
+  <!-- Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',
+            secondary: '#64748b',
+            success: '#10b981',
+            danger: '#ef4444',
+            warning: '#f59e0b',
+            info: '#06b6d4',
+            light: '#f3f4f6',
+            dark: '#1f2937',
+            angus: '#2563eb' // Angus专属深蓝色（专业且易识别）
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto { content-visibility: auto; }
+      .transition-all-300 { transition: all 0.3s ease; }
+      .input-focus {
+        @apply focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none;
+      }
+      .btn {
+        @apply px-4 py-2 rounded-md font-medium transition-all-300 focus:outline-none focus:ring-2 focus:ring-offset-2;
+      }
+      .btn-primary {
+        @apply bg-primary text-white hover:bg-blue-600 focus:ring-blue-500;
+      }
+      .btn-outline {
+        @apply border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500;
+      }
+      .card {
+        @apply bg-white rounded-lg shadow-card p-6 transition-all-300 hover:shadow-card-hover;
+      }
+      .form-label {
+        @apply block text-sm font-medium text-gray-700 mb-1;
+      }
+      .form-input {
+        @apply w-full px-3 py-2 border border-gray-300 rounded-md input-focus;
+      }
+      .form-select {
+        @apply w-full px-3 py-2 border border-gray-300 rounded-md input-focus;
+      }
+      .form-group {
+        @apply mb-4;
+      }
+      .result-value {
+        @apply text-2xl font-bold text-primary;
+      }
+      .formula {
+        @apply bg-gray-50 p-3 rounded-md font-mono text-sm my-2 overflow-x-auto whitespace-pre-wrap;
+      }
+      .input-disabled {
+        @apply bg-gray-50 cursor-not-allowed text-gray-500;
+      }
+      .unit-select {
+        @apply shrink-0 px-3 py-2 border border-gray-300 rounded-md input-focus bg-white text-gray-700;
+      }
+      .angus-signature {
+        @apply text-angus font-medium;
+      }
+      .actual-vout-note {
+        @apply mt-3 text-sm text-gray-700 bg-blue-50 p-2 rounded-md;
+      }
+      .unit-chip {
+        @apply inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-mono;
+      }
+    }
+  </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:Inter, system-ui, sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.container{width:100%}@media (min-width: 640px){.container{max-width:640px}}@media (min-width: 768px){.container{max-width:768px}}@media (min-width: 1024px){.container{max-width:1024px}}@media (min-width: 1280px){.container{max-width:1280px}}@media (min-width: 1536px){.container{max-width:1536px}}.pointer-events-none{pointer-events:none}.absolute{position:absolute}.relative{position:relative}.inset-y-0{top:0px;bottom:0px}.right-0{right:0px}.top-0{top:0px}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:0.25rem}.mb-2{margin-bottom:0.5rem}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.ml-2{margin-left:0.5rem}.mr-1{margin-right:0.25rem}.mr-2{margin-right:0.5rem}.mt-1{margin-top:0.25rem}.mt-2{margin-top:0.5rem}.mt-3{margin-top:0.75rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}.mt-8{margin-top:2rem}.ml-3{margin-left:0.75rem}.flex{display:flex}.grid{display:grid}.hidden{display:none}.min-h-screen{min-height:100vh}.w-full{width:100%}.min-w-0{min-width:0px}.min-w-full{min-width:100%}.flex-1{flex:1 1 0%}.list-inside{list-style-position:inside}.list-decimal{list-style-type:decimal}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.items-baseline{align-items:baseline}.items-stretch{align-items:stretch}.gap-2{gap:0.5rem}.gap-6{gap:1.5rem}.gap-8{gap:2rem}.gap-3{gap:0.75rem}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.divide-y > :not([hidden]) ~ :not([hidden]){--tw-divide-y-reverse:0;border-top-width:calc(1px * calc(1 - var(--tw-divide-y-reverse)));border-bottom-width:calc(1px * var(--tw-divide-y-reverse))}.divide-gray-200 > :not([hidden]) ~ :not([hidden]){--tw-divide-opacity:1;border-color:rgb(229 231 235 / var(--tw-divide-opacity, 1))}.divide-gray-100 > :not([hidden]) ~ :not([hidden]){--tw-divide-opacity:1;border-color:rgb(243 244 246 / var(--tw-divide-opacity, 1))}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-md{border-radius:0.375rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-blue-200{--tw-border-opacity:1;border-color:rgb(191 219 254 / var(--tw-border-opacity, 1))}.border-gray-100{--tw-border-opacity:1;border-color:rgb(243 244 246 / var(--tw-border-opacity, 1))}.border-gray-200{--tw-border-opacity:1;border-color:rgb(229 231 235 / var(--tw-border-opacity, 1))}.border-green-200{--tw-border-opacity:1;border-color:rgb(187 247 208 / var(--tw-border-opacity, 1))}.bg-angus\/10{background-color:rgb(37 99 235 / 0.1)}.bg-angus\/5{background-color:rgb(37 99 235 / 0.05)}.bg-blue-50{--tw-bg-opacity:1;background-color:rgb(239 246 255 / var(--tw-bg-opacity, 1))}.bg-gray-50{--tw-bg-opacity:1;background-color:rgb(249 250 251 / var(--tw-bg-opacity, 1))}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-green-50{--tw-bg-opacity:1;background-color:rgb(240 253 244 / var(--tw-bg-opacity, 1))}.p-3{padding:0.75rem}.p-4{padding:1rem}.p-2{padding:0.5rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-8{padding-top:2rem;padding-bottom:2rem}.px-1{padding-left:0.25rem;padding-right:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.pr-3{padding-right:0.75rem}.pr-8{padding-right:2rem}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.text-2xl{font-size:1.5rem;line-height:2rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.text-angus{--tw-text-opacity:1;color:rgb(37 99 235 / var(--tw-text-opacity, 1))}.text-blue-700{--tw-text-opacity:1;color:rgb(29 78 216 / var(--tw-text-opacity, 1))}.text-blue-800{--tw-text-opacity:1;color:rgb(30 64 175 / var(--tw-text-opacity, 1))}.text-gray-500{--tw-text-opacity:1;color:rgb(107 114 128 / var(--tw-text-opacity, 1))}.text-gray-600{--tw-text-opacity:1;color:rgb(75 85 99 / var(--tw-text-opacity, 1))}.text-gray-700{--tw-text-opacity:1;color:rgb(55 65 81 / var(--tw-text-opacity, 1))}.text-gray-800{--tw-text-opacity:1;color:rgb(31 41 55 / var(--tw-text-opacity, 1))}.text-gray-400{--tw-text-opacity:1;color:rgb(156 163 175 / var(--tw-text-opacity, 1))}.text-info{--tw-text-opacity:1;color:rgb(6 182 212 / var(--tw-text-opacity, 1))}.text-primary{--tw-text-opacity:1;color:rgb(59 130 246 / var(--tw-text-opacity, 1))}.text-success{--tw-text-opacity:1;color:rgb(16 185 129 / var(--tw-text-opacity, 1))}.btn{border-radius:0.375rem;padding-left:1rem;padding-right:1rem;padding-top:0.5rem;padding-bottom:0.5rem;font-weight:500; transition: all 0.3s ease}.btn:focus{outline:2px solid transparent;outline-offset:2px;--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);--tw-ring-offset-width:2px}.btn-primary{--tw-bg-opacity:1;background-color:rgb(59 130 246 / var(--tw-bg-opacity, 1));--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.btn-primary:hover{--tw-bg-opacity:1;background-color:rgb(37 99 235 / var(--tw-bg-opacity, 1))}.btn-primary:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(59 130 246 / var(--tw-ring-opacity, 1))}.btn-outline{border-width:1px;--tw-border-opacity:1;border-color:rgb(209 213 219 / var(--tw-border-opacity, 1));--tw-text-opacity:1;color:rgb(55 65 81 / var(--tw-text-opacity, 1))}.btn-outline:hover{--tw-bg-opacity:1;background-color:rgb(249 250 251 / var(--tw-bg-opacity, 1))}.btn-outline:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(107 114 128 / var(--tw-ring-opacity, 1))}.card{border-radius:0.5rem;--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1));padding:1.5rem;--tw-shadow:0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -1px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); transition: all 0.3s ease}.card:hover{--tw-shadow:0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.form-label{margin-bottom:0.25rem;display:block;font-size:0.875rem;line-height:1.25rem;font-weight:500;--tw-text-opacity:1;color:rgb(55 65 81 / var(--tw-text-opacity, 1))}.form-input{width:100%;border-radius:0.375rem;border-width:1px;--tw-border-opacity:1;border-color:rgb(209 213 219 / var(--tw-border-opacity, 1));padding-left:0.75rem;padding-right:0.75rem;padding-top:0.5rem;padding-bottom:0.5rem}.form-input:focus{--tw-border-opacity:1;border-color:rgb(59 130 246 / var(--tw-border-opacity, 1));outline:2px solid transparent;outline-offset:2px;--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);--tw-ring-opacity:1;--tw-ring-color:rgb(59 130 246 / var(--tw-ring-opacity, 1))}.form-select{width:100%;border-radius:0.375rem;border-width:1px;--tw-border-opacity:1;border-color:rgb(209 213 219 / var(--tw-border-opacity, 1));padding-left:0.75rem;padding-right:0.75rem;padding-top:0.5rem;padding-bottom:0.5rem}.form-select:focus{--tw-border-opacity:1;border-color:rgb(59 130 246 / var(--tw-border-opacity, 1));outline:2px solid transparent;outline-offset:2px;--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);--tw-ring-opacity:1;--tw-ring-color:rgb(59 130 246 / var(--tw-ring-opacity, 1))}.form-group{margin-bottom:1rem}.result-value{font-size:1.5rem;line-height:2rem;font-weight:700;--tw-text-opacity:1;color:rgb(59 130 246 / var(--tw-text-opacity, 1))}.formula{margin-top:0.5rem;margin-bottom:0.5rem;overflow-x:auto;white-space:pre-wrap;border-radius:0.375rem;--tw-bg-opacity:1;background-color:rgb(249 250 251 / var(--tw-bg-opacity, 1));padding:0.75rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-size:0.875rem;line-height:1.25rem}.unit-select{flex-shrink:0;border-radius:0.375rem;border-width:1px;--tw-border-opacity:1;border-color:rgb(209 213 219 / var(--tw-border-opacity, 1));--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1));padding-left:0.75rem;padding-right:0.75rem;padding-top:0.5rem;padding-bottom:0.5rem;--tw-text-opacity:1;color:rgb(55 65 81 / var(--tw-text-opacity, 1))}.unit-select:focus{--tw-border-opacity:1;border-color:rgb(59 130 246 / var(--tw-border-opacity, 1));outline:2px solid transparent;outline-offset:2px;--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);--tw-ring-opacity:1;--tw-ring-color:rgb(59 130 246 / var(--tw-ring-opacity, 1))}.angus-signature{font-weight:500;--tw-text-opacity:1;color:rgb(37 99 235 / var(--tw-text-opacity, 1))}.actual-vout-note{margin-top:0.75rem;border-radius:0.375rem;--tw-bg-opacity:1;background-color:rgb(239 246 255 / var(--tw-bg-opacity, 1));padding:0.5rem;font-size:0.875rem;line-height:1.25rem;--tw-text-opacity:1;color:rgb(55 65 81 / var(--tw-text-opacity, 1))}
+    .hover\:text-danger:hover{--tw-text-opacity:1;color:rgb(239 68 68 / var(--tw-text-opacity, 1))}
+    @media (min-width: 768px){.md\:right-8{right:2rem}.md\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}}
+    @media (min-width: 1024px){.lg\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}}
+  </style></head>
+
+<body class="bg-gray-50 min-h-screen">
+  <div class="container mx-auto px-4 py-8">
+    <!-- 页面标题 - Angus标识 -->
+    <header class="text-center mb-8 relative">
+      <div class="absolute top-0 right-0 md:right-8 bg-angus/10 text-angus px-3 py-1 rounded-full text-sm font-medium">
+        <i class="fa fa-star mr-1"></i>Angus
+      </div>
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">
+        <i class="fa fa-battery-three-quarters text-angus mr-1"></i>
+        电池续航计算工具
+        <span class="angus-signature text-xl ml-2">| Angus</span>
+      </h1>
+      <p class="text-gray-600">根据电池容量、设备功耗与转换损耗，预估设备可用时长</p>
+    </header>
+
+    <!-- 主内容区 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- 左侧：计算表单 -->
+      <div class="card">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">计算参数</h2>
+
+        <!-- 计算说明 -->
+        <div class="form-group mb-6">
+          <div class="bg-blue-50 p-4 rounded-md border border-blue-200">
+            <h3 class="text-blue-800 font-medium mb-2">计算说明</h3>
+            <p class="text-blue-700 text-sm">
+              输入电池容量、设备功耗和转换损耗，系统将自动换算出预估使用时间。<br>
+              <strong>容量单位：</strong>mAh / Ah 需要提供电池电压，Wh 为能量单位无需电压。<br>
+              <strong>功率单位：</strong>mA 会按电池电压换算为功率。<br>
+              <strong>转换损耗：</strong>指升压/降压转换器的能量损失，例如效率 85% 对应损耗 15%。
+            </p>
+          </div>
+        </div>
+
+        <form id="calc-form">
+          <!-- 电池容量 -->
+          <div class="form-group">
+            <label for="cap-value" class="form-label">电池容量 (Capacity)：</label>
+            <div class="flex gap-2 items-stretch">
+              <input type="text" id="cap-value" class="form-input flex-1 min-w-0" placeholder="例如：5000" data-type="number">
+              <select id="cap-unit" class="unit-select" style="width:6.5rem">
+                <option value="mAh" selected="">mAh</option>
+                <option value="Ah">Ah</option>
+                <option value="Wh">Wh</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 电池电压 -->
+          <div class="form-group" id="volt-group">
+            <label for="volt" class="form-label">电池标称电压 (V)：</label>
+            <div class="relative">
+              <input type="text" id="volt" class="form-input pr-8" placeholder="例如：3.7" data-type="number">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <span class="text-gray-500">V</span>
+              </div>
+            </div>
+            <p id="volt-hint" class="text-xs text-gray-500 mt-1">容量为 mAh / Ah 时必填（锂电池通常 3.7V / 3.8V）。</p>
+          </div>
+
+          <!-- 设备功耗 -->
+          <div class="form-group">
+            <label for="power-value" class="form-label">设备功耗 (Power)：</label>
+            <div class="flex gap-2 items-stretch">
+              <input type="text" id="power-value" class="form-input flex-1 min-w-0" placeholder="例如：2.5" data-type="number">
+              <select id="power-unit" class="unit-select" style="width:6.5rem">
+                <option value="W" selected="">W</option>
+                <option value="mW">mW</option>
+                <option value="mA">mA</option>
+              </select>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">选择 mA 时，将按电池电压换算成功耗。</p>
+          </div>
+
+          <!-- 转换损耗 -->
+          <div class="form-group">
+            <label for="loss" class="form-label">转换损耗 (Loss)：</label>
+            <div class="relative">
+              <input type="text" id="loss" class="form-input pr-8" placeholder="例如：15" data-type="number" value="15">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <span class="text-gray-500">%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 每日使用时长 -->
+          <div class="form-group">
+            <label for="daily-value" class="form-label">每日使用时长 (Daily Usage)：</label>
+            <div class="flex gap-2 items-stretch">
+              <input type="text" id="daily-value" class="form-input flex-1 min-w-0" placeholder="例如：8（选填）" data-type="number">
+              <select id="daily-unit" class="unit-select" style="width:6.5rem">
+                <option value="hour" selected="">小时</option>
+                <option value="minute">分钟</option>
+                <option value="second">秒</option>
+              </select>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">选填。填写后额外给出按该用量估算的“可用天数”。</p>
+          </div>
+
+          <!-- 输出时间单位 -->
+          <div class="form-group">
+            <label for="output-unit" class="form-label">输出时间单位：</label>
+            <select id="output-unit" class="form-select">
+              <option value="auto" selected="">自动（智能选择）</option>
+              <option value="year">年</option>
+              <option value="month">月</option>
+              <option value="week">周</option>
+              <option value="day">天</option>
+              <option value="hour">小时</option>
+              <option value="minute">分钟</option>
+              <option value="second">秒</option>
+            </select>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="mt-6 space-y-4">
+            <button type="submit" class="btn btn-primary w-full">
+              <i class="fa fa-calculator mr-2"></i>计算续航时间
+            </button>
+            <button id="reset-form" type="button" class="btn btn-outline w-full">
+              <i class="fa fa-refresh mr-2"></i>重置参数
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 右侧：结果显示 + 单位换算参考 -->
+      <div>
+        <!-- 结果显示卡片 -->
+        <div class="card mb-6">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">预估使用时间</h2>
+          <div id="result-container" class="">
+            <div id="result-content">
+            <div class="mb-3">
+              <span class="text-gray-700">预估使用时间：</span>
+            </div>
+            <div class="flex items-baseline mb-4">
+              <span class="result-value text-3xl">6.29</span>
+              <span class="text-gray-700 ml-2 text-lg">小时</span>
+            </div>
+
+            
+            <div class="bg-green-50 border border-green-200 rounded-md p-3 mb-4">
+              <div class="text-sm text-gray-600 mb-1">按每日使用 200.0 秒 估算：</div>
+              <div class="flex items-baseline flex-wrap">
+                <span class="text-2xl font-bold text-success">113.2</span>
+                <span class="text-gray-700 ml-2">天可用</span>
+                <span class="text-gray-500 ml-3 text-sm">（约 3.77 个月）</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mb-4 text-center">
+              <div class="bg-gray-50 rounded-md p-3">
+                <div class="text-xs text-gray-500 mb-1">电池总能量</div>
+                <div class="font-semibold text-gray-800">3.70 <span class="text-xs">Wh</span></div>
+              </div>
+              <div class="bg-gray-50 rounded-md p-3">
+                <div class="text-xs text-gray-500 mb-1">有效能量</div>
+                <div class="font-semibold text-gray-800">3.15 <span class="text-xs">Wh</span></div>
+              </div>
+              <div class="bg-gray-50 rounded-md p-3">
+                <div class="text-xs text-gray-500 mb-1">设备功耗</div>
+                <div class="font-semibold text-gray-800">0.500 <span class="text-xs">W</span></div>
+              </div>
+            </div>
+
+            <div class="border border-gray-200 rounded-md overflow-hidden">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">单位</th>
+                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">换算结果</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                  
+              <tr class="">
+                <td class="px-3 py-1.5 text-gray-700">年</td>
+                <td class="px-3 py-1.5 text-right font-mono text-gray-800">7.180e-4</td>
+              </tr>
+              <tr class="">
+                <td class="px-3 py-1.5 text-gray-700">月</td>
+                <td class="px-3 py-1.5 text-right font-mono text-gray-800">8.736e-3</td>
+              </tr>
+              <tr class="">
+                <td class="px-3 py-1.5 text-gray-700">周</td>
+                <td class="px-3 py-1.5 text-right font-mono text-gray-800">0.037</td>
+              </tr>
+              <tr class="">
+                <td class="px-3 py-1.5 text-gray-700">天</td>
+                <td class="px-3 py-1.5 text-right font-mono text-gray-800">0.262</td>
+              </tr>
+              <tr class="bg-blue-50">
+                <td class="px-3 py-1.5 text-gray-700">小时</td>
+                <td class="px-3 py-1.5 text-right font-mono text-primary font-bold">6.29</td>
+              </tr>
+              <tr class="">
+                <td class="px-3 py-1.5 text-gray-700">分钟</td>
+                <td class="px-3 py-1.5 text-right font-mono text-gray-800">377.4</td>
+              </tr>
+              <tr class="">
+                <td class="px-3 py-1.5 text-gray-700">秒</td>
+                <td class="px-3 py-1.5 text-right font-mono text-gray-800">22644.0</td>
+              </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="actual-vout-note">
+              <i class="fa fa-info-circle mr-1 text-info"></i>
+              计算过程：E = 1000 mAh × 3.7 V ÷ 1000 = 3.70 Wh → 有效能量 = 3.70 × (1 − 15%) = <strong>3.15 Wh</strong>；P = 0.5 W → 续航 = 3.15 Wh ÷ 0.500 W = <strong>6.29 小时</strong>。按每日使用 200.0 秒，可用约 <strong>113.2 天</strong>（6.29 h ÷ 0.056 h/天）。
+            </div>
+          </div>
+            <div id="formula-display" class="formula mt-4">使用时间(h) = [电池总能量(Wh) × (1 − 损耗%)] ÷ 设备功耗(W)
+           = [3.70 × (1 − 15/100)] ÷ 0.500
+           = 3.15 ÷ 0.500 = 6.29 小时（22644.0 秒）</div>
+          </div>
+          <div id="result-placeholder" class="text-center py-8 text-gray-500 hidden">
+            <i class="fa fa-battery-half fa-3x mb-3"></i>
+            <p>请输入电池容量、设备功耗和转换损耗</p>
+          </div>
+        </div>
+
+        <!-- 时间单位换算参考卡片 -->
+        <div class="card">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">时间单位换算参考</h2>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <tbody class="divide-y divide-gray-200">
+                <tr><td class="py-2 text-gray-700">1 年</td><td class="py-2 text-gray-500 font-mono">≈ 365 天 = 8,760 小时</td></tr>
+                <tr><td class="py-2 text-gray-700">1 月</td><td class="py-2 text-gray-500 font-mono">≈ 30 天 = 720 小时</td></tr>
+                <tr><td class="py-2 text-gray-700">1 周</td><td class="py-2 text-gray-500 font-mono">= 7 天 = 168 小时</td></tr>
+                <tr><td class="py-2 text-gray-700">1 天</td><td class="py-2 text-gray-500 font-mono">= 24 小时 = 1,440 分钟</td></tr>
+                <tr><td class="py-2 text-gray-700">1 小时</td><td class="py-2 text-gray-500 font-mono">= 60 分钟 = 3,600 秒</td></tr>
+                <tr><td class="py-2 text-gray-700">1 分钟</td><td class="py-2 text-gray-500 font-mono">= 60 秒</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-4">
+            <p class="text-sm text-gray-600">
+              换算基准：1 年按 365 天、1 月按 30 天计算（常见工程估算约定）。
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 充电时间估算 + 多段功耗估算 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+      <!-- 充电时间估算 -->
+      <div class="card">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4"><i class="fa fa-bolt text-angus mr-1"></i> 充电时间估算</h2>
+        <div class="bg-blue-50 p-3 rounded-md border border-blue-200 mb-4">
+          <p class="text-blue-700 text-sm">基于上方填入的电池能量，估算把电池充满所需时间。充电效率一般取 80%~90%。</p>
+        </div>
+        <div class="form-group">
+          <label for="charge-power" class="form-label">充电功率：</label>
+          <div class="flex gap-2 items-stretch">
+            <input type="text" id="charge-power" class="form-input flex-1 min-w-0" placeholder="例如：10" data-type="number">
+            <select id="charge-power-unit" class="unit-select" style="width:6.5rem">
+              <option value="W" selected="">W</option>
+              <option value="mW">mW</option>
+              <option value="mA">mA</option>
+            </select>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">选 mA 时按上方电池电压换算。</p>
+        </div>
+        <div class="form-group">
+          <label for="charge-eff" class="form-label">充电效率：</label>
+          <div class="relative">
+            <input type="text" id="charge-eff" class="form-input pr-8" placeholder="例如：85" data-type="number" value="85">
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500">%</span></div>
+          </div>
+        </div>
+        <button id="calc-charge" type="button" class="btn btn-primary w-full"><i class="fa fa-bolt mr-2"></i>计算充电时间</button>
+        <div id="charge-result" class="mt-4">
+          <div class="bg-green-50 border border-green-200 rounded-md p-3">
+            <div class="text-sm text-gray-600 mb-1">满充预估时间：</div>
+            <div class="flex items-baseline flex-wrap"><span class="text-2xl font-bold text-success">1.53</span><span class="text-gray-700 ml-2">小时</span><span class="text-gray-500 ml-3 text-sm">≈ 91.79 分钟 </span></div>
+            <div class="formula mt-2">充电时间(h) = 电池能量(Wh) ÷ [充电功率(W) × 充电效率]
+= 3.70 ÷ [2.85 × 0.850] = 1.53 小时</div>
+          </div></div>
+      </div>
+
+      <!-- 多段功耗估算 -->
+      <div class="card">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4"><i class="fa fa-tasks text-angus mr-1"></i> 多段功耗估算</h2>
+        <div class="bg-blue-50 p-3 rounded-md border border-blue-200 mb-4">
+          <p class="text-blue-700 text-sm">当一天中有多种功耗场景时（如待机 + 亮屏 + 满载），逐行填写功耗与每日时长，估算可用天数。使用上方电池能量与转换损耗。</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="text-xs text-gray-500 uppercase">
+                <th class="px-2 py-1 text-left">功耗</th>
+                <th class="px-2 py-1 text-left">单位</th>
+                <th class="px-2 py-1 text-left">每日时长</th>
+                <th class="px-2 py-1 text-left">单位</th>
+                <th class="px-2 py-1"></th>
+              </tr>
+            </thead>
+            <tbody id="seg-rows"><tr class="border-b border-gray-100">
+          <td class="px-1 py-1"><input type="text" class="form-input seg-p" placeholder="功耗" value="2.5"></td>
+          <td class="px-1 py-1"><select class="unit-select seg-pu" style="width:4.5rem"><option value="W" selected="">W</option><option value="mW">mW</option><option value="mA">mA</option></select></td>
+          <td class="px-1 py-1"><input type="text" class="form-input seg-d" placeholder="时长" value="8"></td>
+          <td class="px-1 py-1"><select class="unit-select seg-du" style="width:4.5rem"><option value="hour" selected="">小时</option><option value="minute">分钟</option><option value="second">秒</option></select></td>
+          <td class="px-1 py-1 text-center"><button type="button" class="text-gray-400 hover:text-danger seg-del" title="删除"><i class="fa fa-times"></i></button></td></tr><tr class="border-b border-gray-100">
+          <td class="px-1 py-1"><input type="text" class="form-input seg-p" placeholder="功耗" value="0.5"></td>
+          <td class="px-1 py-1"><select class="unit-select seg-pu" style="width:4.5rem"><option value="W" selected="">W</option><option value="mW">mW</option><option value="mA">mA</option></select></td>
+          <td class="px-1 py-1"><input type="text" class="form-input seg-d" placeholder="时长" value="16"></td>
+          <td class="px-1 py-1"><select class="unit-select seg-du" style="width:4.5rem"><option value="hour" selected="">小时</option><option value="minute">分钟</option><option value="second">秒</option></select></td>
+          <td class="px-1 py-1 text-center"><button type="button" class="text-gray-400 hover:text-danger seg-del" title="删除"><i class="fa fa-times"></i></button></td></tr></tbody>
+          </table>
+        </div>
+        <div class="mt-3 flex gap-2">
+          <button id="add-seg" type="button" class="btn btn-outline flex-1"><i class="fa fa-plus mr-2"></i>添加一段</button>
+          <button id="calc-seg" type="button" class="btn btn-primary flex-1"><i class="fa fa-calculator mr-2"></i>计算可用天数</button>
+        </div>
+        <div id="seg-result" class="mt-4">
+          <div class="bg-green-50 border border-green-200 rounded-md p-3">
+            <div class="grid grid-cols-2 gap-3 mb-3 text-center">
+              <div class="bg-white rounded-md p-2"><div class="text-xs text-gray-500 mb-1">每日耗电量</div><div class="font-semibold text-gray-800">0.019 <span class="text-xs">Wh/天</span></div></div>
+              <div class="bg-white rounded-md p-2"><div class="text-xs text-gray-500 mb-1">可用天数</div><div class="font-semibold text-success text-lg">161.7 <span class="text-xs">天</span></div></div>
+            </div>
+            <div class="text-sm text-gray-600">各段耗电：0.500W × 0.028h = 0.014Wh；0.200W × 0.028h = 5.556e-3Wh</div>
+            <div class="formula mt-2">可用天数 = 有效能量(Wh) ÷ 每日耗电量(Wh/天)
+= [3.70 × (1 − 15.00%)] ÷ 0.019 = 161.7 天</div>
+          </div></div>
+      </div>
+    </div>
+
+    <!-- 使用说明和公式解释 -->
+    <div class="mt-8 card">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">使用说明</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="text-lg font-medium text-gray-800 mb-2">如何使用</h3>
+          <ol class="list-decimal list-inside space-y-2 text-gray-700">
+            <li>输入电池容量并选择单位（mAh / Ah / Wh）</li>
+            <li>若容量选择 mAh / Ah，请填写电池标称电压（锂电池一般 3.7V）</li>
+            <li>输入设备功耗并选择单位（W / mW / mA）</li>
+            <li>填写转换损耗百分比（效率 85% → 损耗 15%）</li>
+            <li>（选填）填写每日使用时长，可得到"可用天数"</li>
+            <li>选择输出时间单位，或使用"自动"智能匹配</li>
+            <li>点击"计算续航时间"，或输入完成后自动计算</li>
+          </ol>
+        </div>
+        <div>
+          <h3 class="text-lg font-medium text-gray-800 mb-2">公式说明</h3>
+          <p class="text-gray-700 mb-2">核心计算公式：</p>
+          <div class="formula">电池能量 E(Wh) = 容量(mAh) × 电压(V) ÷ 1000
+电池能量 E(Wh) = 容量(Ah) × 电压(V)
+有效能量 = E × (1 − 损耗%)
+使用时间(h) = 有效能量 ÷ 设备功耗(W)
+可用天数 = 使用时间 ÷ 每日使用时长</div>
+          <p class="text-sm text-gray-600 mt-2">
+            先由电池容量与电压求得电池总能量，扣除转换损耗得到可用能量，再除以设备功耗即为预估使用时间。
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 页脚 - Angus签名信息 -->
+    <footer class="mt-8 text-center">
+      <div class="bg-angus/5 rounded-lg p-4 mb-4">
+        <p class="angus-signature text-lg font-medium mb-1">
+          <i class="fa fa-code mr-2"></i>Angus
+        </p>
+        <p class="text-gray-600 text-sm">专注于电子工程工具开发 | 精准 · 高效 · 易用</p>
+      </div>
+      <p class="text-gray-500 text-sm">© 2026 电池续航计算工具 | 用于电子设备续航的快速估算</p>
+    </footer>
+  </div>
+
+  <!-- JavaScript 逻辑 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // ====================== 常量定义 ======================
+      // 时间单位（以秒为基准）
+      const TIME_UNITS = [
+        { key: 'year',   label: '年',   seconds: 365 * 24 * 3600 },
+        { key: 'month',  label: '月',   seconds: 30 * 24 * 3600 },
+        { key: 'week',   label: '周',   seconds: 7 * 24 * 3600 },
+        { key: 'day',    label: '天',   seconds: 24 * 3600 },
+        { key: 'hour',   label: '小时', seconds: 3600 },
+        { key: 'minute', label: '分钟', seconds: 60 },
+        { key: 'second', label: '秒',   seconds: 1 }
+      ];
+
+      // ====================== DOM 元素缓存 ======================
+      const dom = {
+        form: document.getElementById('calc-form'),
+        capValue: document.getElementById('cap-value'),
+        capUnit: document.getElementById('cap-unit'),
+        voltGroup: document.getElementById('volt-group'),
+        volt: document.getElementById('volt'),
+        voltHint: document.getElementById('volt-hint'),
+        powerValue: document.getElementById('power-value'),
+        powerUnit: document.getElementById('power-unit'),
+        loss: document.getElementById('loss'),
+        dailyValue: document.getElementById('daily-value'),
+        dailyUnit: document.getElementById('daily-unit'),
+        outputUnit: document.getElementById('output-unit'),
+        resultContainer: document.getElementById('result-container'),
+        resultContent: document.getElementById('result-content'),
+        formulaDisplay: document.getElementById('formula-display'),
+        resultPlaceholder: document.getElementById('result-placeholder'),
+        resetBtn: document.getElementById('reset-form')
+      };
+
+      // ====================== 工具函数 ======================
+      /**
+       * 过滤非法字符（仅保留数字和小数点，且小数点唯一）
+       */
+      function filterIllegalCharacters(value) {
+        if (!value) return '';
+        let filtered = value.replace(/[^0-9.]/g, '');
+        const dotIndex = filtered.indexOf('.');
+        if (dotIndex !== -1) {
+          filtered = filtered.substring(0, dotIndex + 1) +
+            filtered.substring(dotIndex + 1).replace(/\./g, '');
+        }
+        return filtered;
+      }
+
+      /**
+       * 解析输入值为数字
+       */
+      function parseNumber(value) {
+        if (value === null || value === undefined) return 0;
+        const clean = String(value).trim().replace(/[^0-9.]/g, '');
+        return parseFloat(clean) || 0;
+      }
+
+      /**
+       * 数值格式化
+       */
+      function fmt(n) {
+        if (!isFinite(n)) return '-';
+        const abs = Math.abs(n);
+        if (abs >= 100) return n.toFixed(1);
+        if (abs >= 1) return n.toFixed(2);
+        if (abs >= 0.01) return n.toFixed(3);
+        return n.toExponential(3);
+      }
+
+      /**
+       * 显示提示信息
+       */
+      function showMessage(message, type = 'info') {
+        const iconMap = {
+          success: 'fa-check-circle',
+          warning: 'fa-info-circle',
+          danger: 'fa-exclamation-circle',
+          info: 'fa-info-circle'
+        };
+        const colorMap = {
+          success: 'text-success',
+          warning: 'text-warning',
+          danger: 'text-danger',
+          info: 'text-info'
+        };
+        dom.resultContainer.classList.remove('hidden');
+        dom.resultPlaceholder.classList.add('hidden');
+        dom.resultContent.innerHTML = `
+          <div class="flex items-center ${colorMap[type]}">
+            <i class="fa ${iconMap[type]} mr-2"></i>
+            <span>${message}</span>
+          </div>`;
+        dom.formulaDisplay.textContent = '';
+      }
+
+      // ====================== 核心逻辑 ======================
+      /**
+       * 根据容量单位更新电压输入框状态
+       */
+      function updateFieldStates() {
+        const capUnit = dom.capUnit.value;
+        const needVolt = (capUnit === 'mAh' || capUnit === 'Ah');
+
+        dom.volt.disabled = !needVolt;
+        dom.volt.classList.toggle('input-disabled', !needVolt);
+        dom.voltHint.textContent = needVolt
+          ? '容量为 mAh / Ah 时必填（锂电池通常 3.7V / 3.8V）。'
+          : '容量为 Wh 时无需电压，此项已自动忽略。';
+
+        // 功耗为 mA 时也需要电压
+        if (dom.powerUnit.value === 'mA' && !needVolt) {
+          dom.voltHint.textContent = '功耗单位为 mA 时也需要电压，请填写电池电压。';
+        }
+      }
+
+      /**
+       * 执行计算
+       */
+      function calculate() {
+        const capValue = parseNumber(dom.capValue.value);
+        const capUnit = dom.capUnit.value;
+        const volt = parseNumber(dom.volt.value);
+        const powerValue = parseNumber(dom.powerValue.value);
+        const powerUnit = dom.powerUnit.value;
+        const lossPct = parseNumber(dom.loss.value);
+        const dailyValue = parseNumber(dom.dailyValue.value);
+        const dailyUnitKey = dom.dailyUnit.value;
+        const DAILY_UNIT_SECONDS = { hour: 3600, minute: 60, second: 1 };
+        const DAILY_UNIT_LABEL = { hour: '小时', minute: '分钟', second: '秒' };
+        const dailySeconds = dailyValue * (DAILY_UNIT_SECONDS[dailyUnitKey] || 0);
+
+        if (capValue <= 0) { showMessage('请输入有效的电池容量', 'warning'); return; }
+        if (powerValue <= 0) { showMessage('请输入有效的设备功耗', 'warning'); return; }
+        if (lossPct < 0 || lossPct >= 100) { showMessage('转换损耗应在 0 ~ 100% 之间', 'danger'); return; }
+
+        const needVolt = (capUnit === 'mAh' || capUnit === 'Ah' || powerUnit === 'mA');
+        if (needVolt && volt <= 0) { showMessage('请填写有效的电池电压', 'warning'); return; }
+
+        try {
+          // ---- 1. 电池总能量 E (Wh) ----
+          let energyWh, energyFormula;
+          if (capUnit === 'Wh') {
+            energyWh = capValue;
+            energyFormula = `E = ${capValue} Wh`;
+          } else if (capUnit === 'Ah') {
+            energyWh = capValue * volt;
+            energyFormula = `E = ${capValue} Ah × ${volt} V = ${fmt(energyWh)} Wh`;
+          } else { // mAh
+            energyWh = capValue * volt / 1000;
+            energyFormula = `E = ${capValue} mAh × ${volt} V ÷ 1000 = ${fmt(energyWh)} Wh`;
+          }
+
+          // ---- 2. 设备功耗 P (W) ----
+          let powerW, powerFormula;
+          if (powerUnit === 'W') {
+            powerW = powerValue;
+            powerFormula = `P = ${powerValue} W`;
+          } else if (powerUnit === 'mW') {
+            powerW = powerValue / 1000;
+            powerFormula = `P = ${powerValue} mW ÷ 1000 = ${fmt(powerW)} W`;
+          } else { // mA
+            powerW = powerValue * volt / 1000;
+            powerFormula = `P = ${powerValue} mA × ${volt} V ÷ 1000 = ${fmt(powerW)} W`;
+          }
+
+          // ---- 3. 有效能量与使用时间 ----
+          const usableWh = energyWh * (1 - lossPct / 100);
+          const hours = usableWh / powerW;
+          const totalSeconds = hours * 3600;
+
+          // ---- 4. 选择输出单位 ----
+          const selected = dom.outputUnit.value;
+          let primaryUnit;
+          if (selected === 'auto') {
+            primaryUnit = TIME_UNITS.find(u => totalSeconds / u.seconds >= 1) || TIME_UNITS[TIME_UNITS.length - 1];
+          } else {
+            primaryUnit = TIME_UNITS.find(u => u.key === selected);
+          }
+          const primaryValue = totalSeconds / primaryUnit.seconds;
+
+          // ---- 5. 渲染结果 ----
+          const dailyDays = dailySeconds > 0 ? totalSeconds / dailySeconds : 0;
+          const dailyHtml = dailySeconds > 0 ? `
+            <div class="bg-green-50 border border-green-200 rounded-md p-3 mb-4">
+              <div class="text-sm text-gray-600 mb-1">按每日使用 ${fmt(dailyValue)} ${DAILY_UNIT_LABEL[dailyUnitKey]} 估算：</div>
+              <div class="flex items-baseline flex-wrap">
+                <span class="text-2xl font-bold text-success">${fmt(dailyDays)}</span>
+                <span class="text-gray-700 ml-2">天可用</span>
+                <span class="text-gray-500 ml-3 text-sm">（约 ${fmt(dailyDays / 30)} 个月）</span>
+              </div>
+            </div>` : '';
+
+          const breakdownRows = TIME_UNITS.map(u => {
+            const v = totalSeconds / u.seconds;
+            const isPrimary = u.key === primaryUnit.key;
+            return `
+              <tr class="${isPrimary ? 'bg-blue-50' : ''}">
+                <td class="px-3 py-1.5 text-gray-700">${u.label}</td>
+                <td class="px-3 py-1.5 text-right font-mono ${isPrimary ? 'text-primary font-bold' : 'text-gray-800'}">${fmt(v)}</td>
+              </tr>`;
+          }).join('');
+
+          dom.resultContainer.classList.remove('hidden');
+          dom.resultPlaceholder.classList.add('hidden');
+
+          dom.resultContent.innerHTML = `
+            <div class="mb-3">
+              <span class="text-gray-700">预估使用时间：</span>
+            </div>
+            <div class="flex items-baseline mb-4">
+              <span class="result-value text-3xl">${fmt(primaryValue)}</span>
+              <span class="text-gray-700 ml-2 text-lg">${primaryUnit.label}</span>
+            </div>
+
+            ${dailyHtml}
+
+            <div class="grid grid-cols-3 gap-3 mb-4 text-center">
+              <div class="bg-gray-50 rounded-md p-3">
+                <div class="text-xs text-gray-500 mb-1">电池总能量</div>
+                <div class="font-semibold text-gray-800">${fmt(energyWh)} <span class="text-xs">Wh</span></div>
+              </div>
+              <div class="bg-gray-50 rounded-md p-3">
+                <div class="text-xs text-gray-500 mb-1">有效能量</div>
+                <div class="font-semibold text-gray-800">${fmt(usableWh)} <span class="text-xs">Wh</span></div>
+              </div>
+              <div class="bg-gray-50 rounded-md p-3">
+                <div class="text-xs text-gray-500 mb-1">设备功耗</div>
+                <div class="font-semibold text-gray-800">${fmt(powerW)} <span class="text-xs">W</span></div>
+              </div>
+            </div>
+
+            <div class="border border-gray-200 rounded-md overflow-hidden">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">单位</th>
+                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">换算结果</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                  ${breakdownRows}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="actual-vout-note">
+              <i class="fa fa-info-circle mr-1 text-info"></i>
+              计算过程：${energyFormula} → 有效能量 = ${fmt(energyWh)} × (1 − ${lossPct}%) = <strong>${fmt(usableWh)} Wh</strong>；${powerFormula} → 续航 = ${fmt(usableWh)} Wh ÷ ${fmt(powerW)} W = <strong>${fmt(hours)} 小时</strong>。${dailySeconds > 0 ? `按每日使用 ${fmt(dailyValue)} ${DAILY_UNIT_LABEL[dailyUnitKey]}，可用约 <strong>${fmt(dailyDays)} 天</strong>（${fmt(hours)} h ÷ ${fmt(dailySeconds / 3600)} h/天）。` : ''}
+            </div>
+          `;
+
+          dom.formulaDisplay.textContent =
+            `使用时间(h) = [电池总能量(Wh) × (1 − 损耗%)] ÷ 设备功耗(W)\n` +
+            `           = [${fmt(energyWh)} × (1 − ${lossPct}/100)] ÷ ${fmt(powerW)}\n` +
+            `           = ${fmt(usableWh)} ÷ ${fmt(powerW)} = ${fmt(hours)} 小时（${fmt(totalSeconds)} 秒）`;
+
+        } catch (error) {
+          showMessage(error.message, 'danger');
+        }
+      }
+
+      /**
+       * 重置表单
+       */
+      function resetForm() {
+        dom.capValue.value = '';
+        dom.powerValue.value = '';
+        dom.volt.value = '';
+        dom.loss.value = '15';
+        dom.dailyValue.value = '';
+        dom.dailyUnit.value = 'hour';
+        dom.capUnit.value = 'mAh';
+        dom.powerUnit.value = 'W';
+        dom.outputUnit.value = 'auto';
+
+        dom.resultContainer.classList.add('hidden');
+        dom.resultPlaceholder.classList.remove('hidden');
+        dom.resultContent.innerHTML = '';
+        dom.formulaDisplay.textContent = '';
+
+        updateFieldStates();
+      }
+
+      // ====================== 事件监听 ======================
+      dom.form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        calculate();
+      });
+
+      // 实时过滤非法字符 + 自动计算
+      [dom.capValue, dom.volt, dom.powerValue, dom.loss, dom.dailyValue].forEach(function (input) {
+        input.addEventListener('input', function () {
+          const filtered = filterIllegalCharacters(this.value);
+          if (this.value !== filtered) {
+            const cursorPos = this.selectionStart;
+            this.value = filtered;
+            this.selectionStart = this.selectionEnd = Math.min(cursorPos, filtered.length);
+          }
+          // 关键字段都填写后自动计算
+          if (parseNumber(dom.capValue.value) > 0 && parseNumber(dom.powerValue.value) > 0) {
+            calculate();
+          }
+        });
+      });
+
+      dom.capUnit.addEventListener('change', function () {
+        updateFieldStates();
+        if (parseNumber(dom.capValue.value) > 0 && parseNumber(dom.powerValue.value) > 0) calculate();
+      });
+      dom.powerUnit.addEventListener('change', function () {
+        updateFieldStates();
+        if (parseNumber(dom.capValue.value) > 0 && parseNumber(dom.powerValue.value) > 0) calculate();
+      });
+      dom.dailyUnit.addEventListener('change', function () {
+        if (parseNumber(dom.capValue.value) > 0 && parseNumber(dom.powerValue.value) > 0) calculate();
+      });
+      dom.outputUnit.addEventListener('change', function () {
+        if (parseNumber(dom.capValue.value) > 0 && parseNumber(dom.powerValue.value) > 0) calculate();
+      });
+
+      dom.resetBtn.addEventListener('click', resetForm);
+
+      // 初始化状态
+      updateFieldStates();
+    });
+  </script>
+
+  <!-- 充电时间 & 多段功耗 逻辑 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const $ = id => document.getElementById(id);
+      const SEC = { hour: 3600, minute: 60, second: 1 };
+      function num(v){ if (v === null || v === undefined) return 0; const c = String(v).trim().replace(/[^0-9.]/g,''); return parseFloat(c) || 0; }
+      function fmtN(n){ if (!isFinite(n)) return '-'; const a = Math.abs(n); if (a >= 100) return n.toFixed(1); if (a >= 1) return n.toFixed(2); if (a >= 0.01) return n.toFixed(3); return n.toExponential(3); }
+
+      function batteryEnergyWh(){
+        const cap = num($('cap-value').value);
+        const unit = $('cap-unit').value;
+        const v = num($('volt').value);
+        if (cap <= 0) return 0;
+        if (unit === 'Wh') return cap;
+        if (v <= 0) return 0;
+        if (unit === 'Ah') return cap * v;
+        return cap * v / 1000;
+      }
+      function lossPct(){ return num($('loss').value); }
+      function powerToW(val, unit){ const v = num($('volt').value); if (unit === 'W') return val; if (unit === 'mW') return val / 1000; return val * v / 1000; }
+
+      // ---------- 充电时间 ----------
+      $('calc-charge').addEventListener('click', function () {
+        const energy = batteryEnergyWh();
+        const out = $('charge-result');
+        if (energy <= 0) { out.innerHTML = '<div class="text-warning flex items-center"><i class="fa fa-info-circle mr-2"></i>请先在上方填写电池容量（mAh/Ah 还需电池电压）</div>'; return; }
+        const pv = num($('charge-power').value);
+        if (pv <= 0) { out.innerHTML = '<div class="text-warning flex items-center"><i class="fa fa-info-circle mr-2"></i>请输入充电功率</div>'; return; }
+        const eff = num($('charge-eff').value);
+        if (eff <= 0 || eff > 100) { out.innerHTML = '<div class="text-danger flex items-center"><i class="fa fa-exclamation-circle mr-2"></i>充电效率应在 0~100% 之间</div>'; return; }
+        const pW = powerToW(pv, $('charge-power-unit').value);
+        if (pW <= 0) { out.innerHTML = '<div class="text-warning flex items-center"><i class="fa fa-info-circle mr-2"></i>请输入有效的充电功率</div>'; return; }
+        const hours = energy / (pW * eff / 100);
+        const mins = hours * 60;
+        const extra = hours >= 24 ? `（约 ${fmtN(hours / 24)} 天）` : '';
+        out.innerHTML = `
+          <div class="bg-green-50 border border-green-200 rounded-md p-3">
+            <div class="text-sm text-gray-600 mb-1">满充预估时间：</div>
+            <div class="flex items-baseline flex-wrap"><span class="text-2xl font-bold text-success">${fmtN(hours)}</span><span class="text-gray-700 ml-2">小时</span><span class="text-gray-500 ml-3 text-sm">≈ ${fmtN(mins)} 分钟 ${extra}</span></div>
+            <div class="formula mt-2">充电时间(h) = 电池能量(Wh) ÷ [充电功率(W) × 充电效率]\n= ${fmtN(energy)} ÷ [${fmtN(pW)} × ${fmtN(eff / 100)}] = ${fmtN(hours)} 小时</div>
+          </div>`;
+      });
+
+      // ---------- 多段功耗 ----------
+      const segRows = $('seg-rows');
+      function addSegRow(pv, pu, dv, du){
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-gray-100';
+        tr.innerHTML = `
+          <td class="px-1 py-1"><input type="text" class="form-input seg-p" placeholder="功耗" value="${pv ?? ''}"></td>
+          <td class="px-1 py-1"><select class="unit-select seg-pu" style="width:4.5rem"><option value="W"${pu === 'W' ? ' selected' : ''}>W</option><option value="mW"${pu === 'mW' ? ' selected' : ''}>mW</option><option value="mA"${pu === 'mA' ? ' selected' : ''}>mA</option></select></td>
+          <td class="px-1 py-1"><input type="text" class="form-input seg-d" placeholder="时长" value="${dv ?? ''}"></td>
+          <td class="px-1 py-1"><select class="unit-select seg-du" style="width:4.5rem"><option value="hour"${du === 'hour' ? ' selected' : ''}>小时</option><option value="minute"${du === 'minute' ? ' selected' : ''}>分钟</option><option value="second"${du === 'second' ? ' selected' : ''}>秒</option></select></td>
+          <td class="px-1 py-1 text-center"><button type="button" class="text-gray-400 hover:text-danger seg-del" title="删除"><i class="fa fa-times"></i></button></td>`;
+        tr.querySelector('.seg-del').addEventListener('click', function () {
+          if (segRows.children.length <= 1) { tr.querySelector('.seg-p').value = ''; tr.querySelector('.seg-d').value = ''; }
+          else { tr.remove(); }
+        });
+        segRows.appendChild(tr);
+      }
+      addSegRow('2.5', 'W', '8', 'hour');
+      addSegRow('0.5', 'W', '16', 'hour');
+      $('add-seg').addEventListener('click', function () { addSegRow('', 'W', '', 'hour'); });
+
+      $('calc-seg').addEventListener('click', function () {
+        const energy = batteryEnergyWh();
+        const out = $('seg-result');
+        if (energy <= 0) { out.innerHTML = '<div class="text-warning flex items-center"><i class="fa fa-info-circle mr-2"></i>请先在上方填写电池容量（mAh/Ah 还需电池电压）</div>'; return; }
+        let dailyWh = 0; let rowsUsed = 0; const detail = [];
+        Array.from(segRows.children).forEach(function (tr) {
+          const pv = num(tr.querySelector('.seg-p').value);
+          const pu = tr.querySelector('.seg-pu').value;
+          const dv = num(tr.querySelector('.seg-d').value);
+          const du = tr.querySelector('.seg-du').value;
+          if (pv > 0 && dv > 0) {
+            const pW = powerToW(pv, pu);
+            const hours = dv * (SEC[du] || 3600) / 3600;
+            const wh = pW * hours;
+            dailyWh += wh; rowsUsed++;
+            detail.push(`${fmtN(pW)}W × ${fmtN(hours)}h = ${fmtN(wh)}Wh`);
+          }
+        });
+        if (rowsUsed === 0 || dailyWh <= 0) { out.innerHTML = '<div class="text-warning flex items-center"><i class="fa fa-info-circle mr-2"></i>请至少填写一段有效的功耗与每日时长</div>'; return; }
+        const usable = energy * (1 - lossPct() / 100);
+        const days = usable / dailyWh;
+        out.innerHTML = `
+          <div class="bg-green-50 border border-green-200 rounded-md p-3">
+            <div class="grid grid-cols-2 gap-3 mb-3 text-center">
+              <div class="bg-white rounded-md p-2"><div class="text-xs text-gray-500 mb-1">每日耗电量</div><div class="font-semibold text-gray-800">${fmtN(dailyWh)} <span class="text-xs">Wh/天</span></div></div>
+              <div class="bg-white rounded-md p-2"><div class="text-xs text-gray-500 mb-1">可用天数</div><div class="font-semibold text-success text-lg">${fmtN(days)} <span class="text-xs">天</span></div></div>
+            </div>
+            <div class="text-sm text-gray-600">各段耗电：${detail.join('；')}</div>
+            <div class="formula mt-2">可用天数 = 有效能量(Wh) ÷ 每日耗电量(Wh/天)\n= [${fmtN(energy)} × (1 − ${fmtN(lossPct())}%)] ÷ ${fmtN(dailyWh)} = ${fmtN(days)} 天</div>
+          </div>`;
+      });
+    });
+  </script>
+
+
+</body></html>
