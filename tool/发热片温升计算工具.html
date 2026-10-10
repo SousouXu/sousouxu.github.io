@@ -112,23 +112,51 @@
           <h3 class="text-blue-800 font-medium mb-2">计算说明</h3>
           <p class="text-blue-700 text-sm">
             发热功率由电学参数求得（电压×电流）；升温采用"对流 + 辐射"稳态热平衡估算，辐射散热与材质发射率 ε 有关。<br>
+            <strong>尺寸输入：</strong>输入发热片长和宽，面积（长×宽）自动计算。<br>
             <strong>电学输入：</strong>填写「电压+电流」即可，或任意两项（电压/电流/电阻）自动求出功率。<br>
             <strong>材质：</strong>不同材质的发射率与耐温上限不同，影响散热与安全判断。
           </p>
         </div>
 
         <form id="calc-form">
-          <!-- 发热面积 -->
+          <!-- 面积输入方式 -->
           <div class="form-group">
-            <label for="area-value" class="form-label">发热面积 (Area)：</label>
-            <div class="flex gap-2 items-stretch">
-              <input type="text" id="area-value" class="form-input flex-1 min-w-0" placeholder="例如：10" data-type="number">
-              <select id="area-unit" class="unit-select" style="width:6.5rem">
-                <option value="cm2" selected>cm²</option>
-                <option value="mm2">mm²</option>
-                <option value="m2">m²</option>
-              </select>
+            <label class="form-label">发热面积输入方式：</label>
+            <div class="flex gap-5 mb-3 text-sm">
+              <label class="inline-flex items-center gap-1 cursor-pointer">
+                <input type="radio" name="area-mode" value="lw" class="accent-blue-600" checked> 按长 × 宽
+              </label>
+              <label class="inline-flex items-center gap-1 cursor-pointer">
+                <input type="radio" name="area-mode" value="area" class="accent-blue-600"> 直接输入面积
+              </label>
             </div>
+
+            <!-- 长×宽 -->
+            <div id="mode-lw">
+              <div class="flex gap-2 items-stretch">
+                <input type="text" id="len-value" class="form-input flex-1 min-w-0" placeholder="长 例：10" data-type="number">
+                <span class="self-center text-gray-400 font-medium">×</span>
+                <input type="text" id="width-value" class="form-input flex-1 min-w-0" placeholder="宽 例：5" data-type="number">
+                <select id="size-unit" class="unit-select" style="width:5rem">
+                  <option value="cm" selected>cm</option>
+                  <option value="mm">mm</option>
+                  <option value="m">m</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 直接面积 -->
+            <div id="mode-area" class="hidden">
+              <div class="flex gap-2 items-stretch">
+                <input type="text" id="area-value" class="form-input flex-1 min-w-0" placeholder="例如：10" data-type="number">
+                <select id="area-unit" class="unit-select" style="width:5rem">
+                  <option value="cm2" selected>cm²</option>
+                  <option value="mm2">mm²</option>
+                  <option value="m2">m²</option>
+                </select>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">面积自动换算为 m² 参与温升计算。</p>
           </div>
 
           <!-- 电源电压 -->
@@ -269,7 +297,7 @@
         <div>
           <h3 class="text-lg font-medium text-gray-800 mb-2">如何使用</h3>
           <ol class="list-decimal list-inside space-y-2 text-gray-700">
-            <li>填写发热面积并选择单位（mm² / cm² / m²）</li>
+            <li>选择面积输入方式：按长×宽，或直接输入面积</li>
             <li>输入电源电压与电流（或任意两项电学参数，第三项自动求得）</li>
             <li>填写环境温度（默认 25°C）</li>
             <li>选择发热材质（决定发射率与耐温上限）</li>
@@ -330,11 +358,16 @@
         sealed:       { name: '密闭 / 真空（仅辐射）', h: 0 }
       };
 
-      const AREA_TO_M2 = { mm2: 1e-6, cm2: 1e-4, m2: 1 };
+      const AREA_TO_M2 = { mm: 1e-6, cm: 1e-4, m: 1, mm2: 1e-6, cm2: 1e-4, m2: 1 };
 
       // ====================== DOM ======================
       const dom = {
         form: document.getElementById('calc-form'),
+        lenValue: document.getElementById('len-value'),
+        widthValue: document.getElementById('width-value'),
+        sizeUnit: document.getElementById('size-unit'),
+        modeLw: document.getElementById('mode-lw'),
+        modeArea: document.getElementById('mode-area'),
         areaValue: document.getElementById('area-value'),
         areaUnit: document.getElementById('area-unit'),
         volt: document.getElementById('volt'),
@@ -386,16 +419,35 @@
         dom.formulaDisplay.textContent = '';
       }
 
+      function areaMode() { const r = document.querySelector('input[name="area-mode"]:checked'); return r ? r.value : 'lw'; }
+      function areaReady() {
+        if (areaMode() === 'area') return parseNumber(dom.areaValue.value) > 0;
+        return parseNumber(dom.lenValue.value) > 0 && parseNumber(dom.widthValue.value) > 0;
+      }
+
       // ====================== 计算 ======================
       function calculate() {
         const v = parseNumber(dom.volt.value);
         const i = parseNumber(dom.currentValue.value) * (dom.currentUnit.value === 'mA' ? 0.001 : 1);
         const r = parseNumber(dom.resistance.value);
         const taC = parseNumber(dom.ta.value);
-        const areaRaw = parseNumber(dom.areaValue.value);
-        const areaM2 = areaRaw * (AREA_TO_M2[dom.areaUnit.value] || 1e-4);
-
-        if (areaRaw <= 0) { showMessage('请输入有效的发热面积', 'warning'); return; }
+        let areaRaw, areaM2, sizeDesc;
+        if (areaMode() === 'area') {
+          const a = parseNumber(dom.areaValue.value);
+          const u = dom.areaUnit.value;
+          if (a <= 0) { showMessage('请输入有效的发热面积', 'warning'); return; }
+          areaRaw = a;
+          areaM2 = a * (AREA_TO_M2[u] || 1e-4);
+          sizeDesc = `面积 ${fmt(a)} ${dom.areaUnit.options[dom.areaUnit.selectedIndex].text}`;
+        } else {
+          const l = parseNumber(dom.lenValue.value);
+          const w = parseNumber(dom.widthValue.value);
+          const u = dom.sizeUnit.value;
+          if (l <= 0 || w <= 0) { showMessage('请输入有效的发热片长和宽', 'warning'); return; }
+          areaRaw = l * w;
+          areaM2 = areaRaw * (AREA_TO_M2[u] || 1e-4);
+          sizeDesc = `${fmt(l)} × ${fmt(w)} ${u}，面积 ${fmt(areaRaw)} ${u}²`;
+        }
 
         // ---- 1. 功率与电阻 ----
         let power, rCalc = 0, pFormula, pSource;
@@ -496,7 +548,7 @@
 
           <div class="text-sm text-gray-600 bg-gray-50 rounded-md p-3">
             <div>材质：<strong>${mat.name}</strong>（ε=${mat.emis}）　散热：<strong>${cool.name}</strong>　h=${fmt(h)} W/(m²·K)</div>
-            <div class="mt-1">发热面积：${fmt(areaRaw)} ${dom.areaUnit.options[dom.areaUnit.selectedIndex].text}　环境温度：${fmt(taC)} °C　功率来源：${pSource}</div>
+            <div class="mt-1">尺寸/面积：${sizeDesc}　环境温度：${fmt(taC)} °C　功率来源：${pSource}</div>
           </div>
           ${warnHtml}
         `;
@@ -509,8 +561,15 @@
       }
 
       function resetForm() {
+        dom.lenValue.value = '';
+        dom.widthValue.value = '';
+        dom.sizeUnit.value = 'cm';
         dom.areaValue.value = '';
         dom.areaUnit.value = 'cm2';
+        const lwRadio = document.querySelector('input[name="area-mode"][value="lw"]');
+        if (lwRadio) lwRadio.checked = true;
+        dom.modeLw.classList.remove('hidden');
+        dom.modeArea.classList.add('hidden');
         dom.volt.value = '';
         dom.currentValue.value = '';
         dom.currentUnit.value = 'A';
@@ -528,7 +587,7 @@
       // ====================== 事件 ======================
       dom.form.addEventListener('submit', function (e) { e.preventDefault(); calculate(); });
 
-      [dom.areaValue, dom.volt, dom.currentValue, dom.resistance, dom.ta, dom.hconv].forEach(function (input) {
+      [dom.lenValue, dom.widthValue, dom.areaValue, dom.volt, dom.currentValue, dom.resistance, dom.ta, dom.hconv].forEach(function (input) {
         input.addEventListener('input', function () {
           const filtered = filterIllegalCharacters(this.value);
           if (this.value !== filtered) {
@@ -536,11 +595,19 @@
             this.value = filtered;
             this.selectionStart = this.selectionEnd = Math.min(pos, filtered.length);
           }
-          if (parseNumber(dom.areaValue.value) > 0) calculate();
+          if (areaReady()) calculate();
         });
       });
-      [dom.areaUnit, dom.currentUnit, dom.material, dom.cooling].forEach(function (sel) {
-        sel.addEventListener('change', function () { if (parseNumber(dom.areaValue.value) > 0) calculate(); });
+      [dom.sizeUnit, dom.areaUnit, dom.currentUnit, dom.material, dom.cooling].forEach(function (sel) {
+        sel.addEventListener('change', function () { if (areaReady()) calculate(); });
+      });
+      document.querySelectorAll('input[name="area-mode"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+          const mode = this.value;
+          dom.modeLw.classList.toggle('hidden', mode !== 'lw');
+          dom.modeArea.classList.toggle('hidden', mode !== 'area');
+          if (areaReady()) calculate();
+        });
       });
       dom.resetBtn.addEventListener('click', resetForm);
     });
