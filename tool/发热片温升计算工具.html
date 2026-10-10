@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>发热片温升计算工具 | Angus</title>
+  <!-- 外部资源 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+  <!-- Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',
+            secondary: '#64748b',
+            success: '#10b981',
+            danger: '#ef4444',
+            warning: '#f59e0b',
+            info: '#06b6d4',
+            light: '#f3f4f6',
+            dark: '#1f2937',
+            angus: '#2563eb'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto { content-visibility: auto; }
+      .transition-all-300 { transition: all 0.3s ease; }
+      .input-focus {
+        @apply focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none;
+      }
+      .btn {
+        @apply px-4 py-2 rounded-md font-medium transition-all-300 focus:outline-none focus:ring-2 focus:ring-offset-2;
+      }
+      .btn-primary {
+        @apply bg-primary text-white hover:bg-blue-600 focus:ring-blue-500;
+      }
+      .btn-outline {
+        @apply border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500;
+      }
+      .card {
+        @apply bg-white rounded-lg shadow-card p-6 transition-all-300 hover:shadow-card-hover;
+      }
+      .form-label {
+        @apply block text-sm font-medium text-gray-700 mb-1;
+      }
+      .form-input {
+        @apply w-full px-3 py-2 border border-gray-300 rounded-md input-focus;
+      }
+      .form-select {
+        @apply w-full px-3 py-2 border border-gray-300 rounded-md input-focus;
+      }
+      .unit-select {
+        @apply shrink-0 px-3 py-2 border border-gray-300 rounded-md input-focus bg-white text-gray-700;
+      }
+      .form-group {
+        @apply mb-4;
+      }
+      .result-value {
+        @apply text-2xl font-bold text-primary;
+      }
+      .formula {
+        @apply bg-gray-50 p-3 rounded-md font-mono text-sm my-2 overflow-x-auto whitespace-pre-wrap;
+      }
+      .input-disabled {
+        @apply bg-gray-50 cursor-not-allowed text-gray-500;
+      }
+      .angus-signature {
+        @apply text-angus font-medium;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+  <div class="container mx-auto px-4 py-8">
+    <!-- 页面标题 - Angus标识 -->
+    <header class="text-center mb-8 relative">
+      <div class="absolute top-0 right-0 md:right-8 bg-angus/10 text-angus px-3 py-1 rounded-full text-sm font-medium">
+        <i class="fa fa-star mr-1"></i>Angus
+      </div>
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">
+        <i class="fa fa-fire text-angus mr-1"></i>
+        发热片温升计算工具
+        <span class="angus-signature text-xl ml-2">| Angus</span>
+      </h1>
+      <p class="text-gray-600">根据电功率、发热面积与材质，预估发热片的稳态温升</p>
+    </header>
+
+    <!-- 主内容区 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- 左侧：计算表单 -->
+      <div class="card">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">计算参数</h2>
+
+        <div class="bg-blue-50 p-4 rounded-md border border-blue-200 mb-6">
+          <h3 class="text-blue-800 font-medium mb-2">计算说明</h3>
+          <p class="text-blue-700 text-sm">
+            发热功率由电学参数求得（电压×电流）；升温采用"对流 + 辐射"稳态热平衡估算，辐射散热与材质发射率 ε 有关。<br>
+            <strong>电学输入：</strong>填写「电压+电流」即可，或任意两项（电压/电流/电阻）自动求出功率。<br>
+            <strong>材质：</strong>不同材质的发射率与耐温上限不同，影响散热与安全判断。
+          </p>
+        </div>
+
+        <form id="calc-form">
+          <!-- 发热面积 -->
+          <div class="form-group">
+            <label for="area-value" class="form-label">发热面积 (Area)：</label>
+            <div class="flex gap-2 items-stretch">
+              <input type="text" id="area-value" class="form-input flex-1 min-w-0" placeholder="例如：10" data-type="number">
+              <select id="area-unit" class="unit-select" style="width:6.5rem">
+                <option value="cm2" selected>cm²</option>
+                <option value="mm2">mm²</option>
+                <option value="m2">m²</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 电源电压 -->
+          <div class="form-group">
+            <label for="volt" class="form-label">电源电压 (V)：</label>
+            <div class="relative">
+              <input type="text" id="volt" class="form-input pr-8" placeholder="例如：12" data-type="number">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500">V</span></div>
+            </div>
+          </div>
+
+          <!-- 电流 -->
+          <div class="form-group">
+            <label for="current-value" class="form-label">电流 (I)：</label>
+            <div class="flex gap-2 items-stretch">
+              <input type="text" id="current-value" class="form-input flex-1 min-w-0" placeholder="例如：1.5" data-type="number">
+              <select id="current-unit" class="unit-select" style="width:6.5rem">
+                <option value="A" selected>A</option>
+                <option value="mA">mA</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 发热电阻 -->
+          <div class="form-group">
+            <label for="resistance" class="form-label">发热电阻 (R)：<span class="text-gray-400 font-normal text-xs">选填</span></label>
+            <div class="relative">
+              <input type="text" id="resistance" class="form-input pr-8" placeholder="例如：8" data-type="number">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500">Ω</span></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">用于校验/补全：R = V / I。与电压电流不一致时会给出提示。</p>
+          </div>
+
+          <!-- 环境温度 -->
+          <div class="form-group">
+            <label for="ta" class="form-label">环境温度 (Ta)：</label>
+            <div class="relative">
+              <input type="text" id="ta" class="form-input pr-8" placeholder="例如：25" data-type="number" value="25">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500">°C</span></div>
+            </div>
+          </div>
+
+          <!-- 发热材质 -->
+          <div class="form-group">
+            <label for="material" class="form-label">发热材质：</label>
+            <select id="material" class="form-select">
+              <option value="graphene" selected>石墨烯发热膜（ε=0.95）</option>
+              <option value="carbon">碳纤维发热片（ε=0.90）</option>
+              <option value="nichrome">镍铬合金电热丝（ε=0.85）</option>
+              <option value="stainless">不锈钢发热片（ε=0.80）</option>
+              <option value="silicone">硅胶发热片（ε=0.90）</option>
+              <option value="ptc">陶瓷 PTC（ε=0.90）</option>
+              <option value="copper">铜（氧化，ε=0.60）</option>
+              <option value="aluminum">铝（阳极氧化，ε=0.80）</option>
+            </select>
+          </div>
+
+          <!-- 散热条件 -->
+          <div class="form-group">
+            <label for="cooling" class="form-label">散热条件：</label>
+            <select id="cooling" class="form-select">
+              <option value="natural_up" selected>自然对流 · 水平向上</option>
+              <option value="natural_vert">自然对流 · 垂直放置</option>
+              <option value="natural_down">自然对流 · 水平向下</option>
+              <option value="fan_weak">强制风冷 · 弱风</option>
+              <option value="fan_strong">强制风冷 · 强风</option>
+              <option value="sealed">密闭 / 真空（仅辐射）</option>
+            </select>
+          </div>
+
+          <!-- 高级：对流换热系数 -->
+          <div class="form-group">
+            <label for="hconv" class="form-label">对流换热系数 h：<span class="text-gray-400 font-normal text-xs">选填</span></label>
+            <div class="relative">
+              <input type="text" id="hconv" class="form-input pr-24" placeholder="留空则按散热条件取值" data-type="number">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500 text-xs">W/(m²·K)</span></div>
+            </div>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="mt-6 space-y-4">
+            <button type="submit" class="btn btn-primary w-full">
+              <i class="fa fa-calculator mr-2"></i>计算温升
+            </button>
+            <button id="reset-form" type="button" class="btn btn-outline w-full">
+              <i class="fa fa-refresh mr-2"></i>重置参数
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 右侧：结果 + 材质参考 -->
+      <div>
+        <div class="card mb-6">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">预估结果</h2>
+          <div id="result-container" class="hidden">
+            <div id="result-content"></div>
+            <div id="formula-display" class="formula mt-4"></div>
+          </div>
+          <div id="result-placeholder" class="text-center py-8 text-gray-500">
+            <i class="fa fa-thermometer-half fa-3x mb-3"></i>
+            <p>请填写电学参数、发热面积并选择材质</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">材质参数参考</h2>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead>
+                <tr class="text-xs text-gray-500 uppercase">
+                  <th class="px-3 py-2 text-left">材质</th>
+                  <th class="px-3 py-2 text-right">发射率 ε</th>
+                  <th class="px-3 py-2 text-right">耐温上限</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                <tr><td class="px-3 py-2">石墨烯发热膜</td><td class="px-3 py-2 text-right font-mono">0.95</td><td class="px-3 py-2 text-right font-mono">200 °C</td></tr>
+                <tr><td class="px-3 py-2">碳纤维发热片</td><td class="px-3 py-2 text-right font-mono">0.90</td><td class="px-3 py-2 text-right font-mono">250 °C</td></tr>
+                <tr><td class="px-3 py-2">镍铬合金电热丝</td><td class="px-3 py-2 text-right font-mono">0.85</td><td class="px-3 py-2 text-right font-mono">400 °C</td></tr>
+                <tr><td class="px-3 py-2">不锈钢发热片</td><td class="px-3 py-2 text-right font-mono">0.80</td><td class="px-3 py-2 text-right font-mono">300 °C</td></tr>
+                <tr><td class="px-3 py-2">硅胶发热片</td><td class="px-3 py-2 text-right font-mono">0.90</td><td class="px-3 py-2 text-right font-mono">180 °C</td></tr>
+                <tr><td class="px-3 py-2">陶瓷 PTC</td><td class="px-3 py-2 text-right font-mono">0.90</td><td class="px-3 py-2 text-right font-mono">250 °C</td></tr>
+                <tr><td class="px-3 py-2">铜（氧化）</td><td class="px-3 py-2 text-right font-mono">0.60</td><td class="px-3 py-2 text-right font-mono">300 °C</td></tr>
+                <tr><td class="px-3 py-2">铝（阳极氧化）</td><td class="px-3 py-2 text-right font-mono">0.80</td><td class="px-3 py-2 text-right font-mono">300 °C</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-xs text-gray-500 mt-3">发射率 ε 越大，辐射散热越强（同温度下表面温度更低）。数值为常见工程参考值。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 使用说明和公式解释 -->
+    <div class="mt-8 card">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">使用说明</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="text-lg font-medium text-gray-800 mb-2">如何使用</h3>
+          <ol class="list-decimal list-inside space-y-2 text-gray-700">
+            <li>填写发热面积并选择单位（mm² / cm² / m²）</li>
+            <li>输入电源电压与电流（或任意两项电学参数，第三项自动求得）</li>
+            <li>填写环境温度（默认 25°C）</li>
+            <li>选择发热材质（决定发射率与耐温上限）</li>
+            <li>选择散热条件（自然对流 / 强制风冷 / 密闭）</li>
+            <li>点击"计算温升"得到稳态表面温度与温升</li>
+          </ol>
+        </div>
+        <div>
+          <h3 class="text-lg font-medium text-gray-800 mb-2">公式说明</h3>
+          <p class="text-gray-700 mb-2">核心计算公式：</p>
+          <div class="formula">① 发热功率 P(W) = V × I = I²R = V²/R
+② 热平衡（稳态）：P = A × [ h·ΔT + ε·σ·((Ta+ΔT)⁴ − Ta⁴) ]
+③ 温升 ΔT = Ts − Ta（数值求解，含辐射项）
+④ 稳态表面温度 Ts = Ta + ΔT
+   σ = 5.67×10⁻⁸ W/(m²·K⁴)，ε 为发射率</div>
+          <p class="text-sm text-gray-600 mt-2">
+            该模型为集总稳态估算，未计入基板导热热阻、边缘效应与热辐射视角因子；实际温升还受安装方式、引线散热与气流影响，建议留 20% 以上余量。
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="mt-8 text-center">
+      <div class="bg-angus/5 rounded-lg p-4 mb-4">
+        <p class="angus-signature text-lg font-medium mb-1">
+          <i class="fa fa-code mr-2"></i>Angus
+        </p>
+        <p class="text-gray-600 text-sm">专注于电子工程工具开发 | 精准 · 高效 · 易用</p>
+      </div>
+      <p class="text-gray-500 text-sm">© 2026 发热片温升计算工具 | 用于发热片/电热膜温升的工程快速估算</p>
+    </footer>
+  </div>
+
+  <!-- JavaScript 逻辑 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // ====================== 常量 ======================
+      const SIGMA = 5.670374e-8; // 斯特藩-玻尔兹曼常数
+
+      const MATERIALS = {
+        graphene:  { name: '石墨烯发热膜', emis: 0.95, tmax: 200, note: '高辐射率远红外辐射型' },
+        carbon:    { name: '碳纤维发热片', emis: 0.90, tmax: 250, note: '' },
+        nichrome:  { name: '镍铬合金电热丝', emis: 0.85, tmax: 400, note: '' },
+        stainless: { name: '不锈钢发热片', emis: 0.80, tmax: 300, note: '' },
+        silicone:  { name: '硅胶发热片', emis: 0.90, tmax: 180, note: '' },
+        ptc:       { name: '陶瓷 PTC', emis: 0.90, tmax: 250, note: '' },
+        copper:    { name: '铜（氧化）', emis: 0.60, tmax: 300, note: '' },
+        aluminum:  { name: '铝（阳极氧化）', emis: 0.80, tmax: 300, note: '' }
+      };
+
+      const COOLING = {
+        natural_up:   { name: '自然对流 · 水平向上', h: 7 },
+        natural_vert: { name: '自然对流 · 垂直放置', h: 5 },
+        natural_down: { name: '自然对流 · 水平向下', h: 3 },
+        fan_weak:     { name: '强制风冷 · 弱风', h: 15 },
+        fan_strong:   { name: '强制风冷 · 强风', h: 30 },
+        sealed:       { name: '密闭 / 真空（仅辐射）', h: 0 }
+      };
+
+      const AREA_TO_M2 = { mm2: 1e-6, cm2: 1e-4, m2: 1 };
+
+      // ====================== DOM ======================
+      const dom = {
+        form: document.getElementById('calc-form'),
+        areaValue: document.getElementById('area-value'),
+        areaUnit: document.getElementById('area-unit'),
+        volt: document.getElementById('volt'),
+        currentValue: document.getElementById('current-value'),
+        currentUnit: document.getElementById('current-unit'),
+        resistance: document.getElementById('resistance'),
+        ta: document.getElementById('ta'),
+        material: document.getElementById('material'),
+        cooling: document.getElementById('cooling'),
+        hconv: document.getElementById('hconv'),
+        resetBtn: document.getElementById('reset-form'),
+        resultContainer: document.getElementById('result-container'),
+        resultContent: document.getElementById('result-content'),
+        formulaDisplay: document.getElementById('formula-display'),
+        resultPlaceholder: document.getElementById('result-placeholder')
+      };
+
+      // ====================== 工具函数 ======================
+      function filterIllegalCharacters(value) {
+        if (!value) return '';
+        let filtered = value.replace(/[^0-9.]/g, '');
+        const dotIndex = filtered.indexOf('.');
+        if (dotIndex !== -1) {
+          filtered = filtered.substring(0, dotIndex + 1) + filtered.substring(dotIndex + 1).replace(/\./g, '');
+        }
+        return filtered;
+      }
+      function parseNumber(value) {
+        if (value === null || value === undefined) return 0;
+        const clean = String(value).trim().replace(/[^0-9.]/g, '');
+        return parseFloat(clean) || 0;
+      }
+      function fmt(n, d) {
+        if (!isFinite(n)) return '-';
+        if (d !== undefined) return n.toFixed(d);
+        const abs = Math.abs(n);
+        if (abs >= 100) return n.toFixed(1);
+        if (abs >= 1) return n.toFixed(2);
+        if (abs >= 0.01) return n.toFixed(3);
+        return n.toExponential(3);
+      }
+      function showMessage(message, type) {
+        type = type || 'info';
+        const iconMap = { success: 'fa-check-circle', warning: 'fa-info-circle', danger: 'fa-exclamation-circle', info: 'fa-info-circle' };
+        const colorMap = { success: 'text-success', warning: 'text-warning', danger: 'text-danger', info: 'text-info' };
+        dom.resultContainer.classList.remove('hidden');
+        dom.resultPlaceholder.classList.add('hidden');
+        dom.resultContent.innerHTML = `<div class="flex items-center ${colorMap[type]}"><i class="fa ${iconMap[type]} mr-2"></i><span>${message}</span></div>`;
+        dom.formulaDisplay.textContent = '';
+      }
+
+      // ====================== 计算 ======================
+      function calculate() {
+        const v = parseNumber(dom.volt.value);
+        const i = parseNumber(dom.currentValue.value) * (dom.currentUnit.value === 'mA' ? 0.001 : 1);
+        const r = parseNumber(dom.resistance.value);
+        const taC = parseNumber(dom.ta.value);
+        const areaRaw = parseNumber(dom.areaValue.value);
+        const areaM2 = areaRaw * (AREA_TO_M2[dom.areaUnit.value] || 1e-4);
+
+        if (areaRaw <= 0) { showMessage('请输入有效的发热面积', 'warning'); return; }
+
+        // ---- 1. 功率与电阻 ----
+        let power, rCalc = 0, pFormula, pSource;
+        if (v > 0 && i > 0) {
+          power = v * i; rCalc = v / i;
+          pFormula = `P = V × I = ${fmt(v)} V × ${fmt(i)} A = ${fmt(power)} W`;
+          pSource = '电压×电流';
+        } else if (i > 0 && r > 0) {
+          power = i * i * r; rCalc = r;
+          pFormula = `P = I²R = ${fmt(i)}² × ${fmt(r)} Ω = ${fmt(power)} W`;
+          pSource = '电流²×电阻';
+        } else if (v > 0 && r > 0) {
+          power = v * v / r; rCalc = r;
+          pFormula = `P = V²/R = ${fmt(v)}² ÷ ${fmt(r)} Ω = ${fmt(power)} W`;
+          pSource = '电压²÷电阻';
+        } else {
+          showMessage('请至少输入"电压+电流""电流+电阻"或"电压+电阻"中的一组', 'warning');
+          return;
+        }
+        if (power <= 0) { showMessage('计算得到功率为 0，请检查输入', 'danger'); return; }
+
+        // 电阻校验
+        let rWarn = '';
+        if (r > 0 && v > 0 && i > 0) {
+          const dev = Math.abs(r - rCalc) / r * 100;
+          if (dev > 5) rWarn = `提示：输入电阻 ${fmt(r)} Ω 与 V/I 推算的 ${fmt(rCalc)} Ω 偏差 ${dev.toFixed(1)}%，已按电压×电流计算功率。`;
+        }
+
+        // ---- 2. 材质与散热系数 ----
+        const mat = MATERIALS[dom.material.value];
+        const cool = COOLING[dom.cooling.value];
+        const hManual = parseNumber(dom.hconv.value);
+        const h = (dom.hconv.value.trim() !== '' && hManual > 0) ? hManual : cool.h;
+        if (h <= 0 && mat.emis <= 0) { showMessage('对流与辐射散热均为 0，无法散热', 'danger'); return; }
+
+        // ---- 3. 数值求解 ΔT ----
+        const TaK = taC + 273.15;
+        const f = dT => areaM2 * (h * dT + mat.emis * SIGMA * (Math.pow(TaK + dT, 4) - Math.pow(TaK, 4))) - power;
+        let lo = 0, hi = 1;
+        while (f(hi) < 0 && hi < 8000) hi *= 2;
+        let dT, converged = true;
+        if (f(hi) < 0) { converged = false; dT = Infinity; }
+        else {
+          for (let k = 0; k < 300; k++) { const mid = (lo + hi) / 2; if (f(mid) < 0) lo = mid; else hi = mid; }
+          dT = (lo + hi) / 2;
+        }
+        const tsC = taC + dT;
+
+        // ---- 4. 散热占比 ----
+        const qConv = areaM2 * h * dT;
+        const qRad = areaM2 * mat.emis * SIGMA * (Math.pow(TaK + dT, 4) - Math.pow(TaK, 4));
+        const radPct = (qConv + qRad) > 0 ? qRad / (qConv + qRad) * 100 : 0;
+        const heatFlux = power / (areaM2 / 1e-4); // W/cm²
+
+        // ---- 5. 渲染 ----
+        const overLimit = isFinite(tsC) && tsC > mat.tmax;
+        let warnHtml = '';
+        if (!converged) {
+          warnHtml = `<div class="mt-3 bg-red-50 border border-red-200 text-red-700 rounded-md p-3 text-sm"><i class="fa fa-exclamation-triangle mr-1"></i>散热能力过低，温升发散（散热面积太小或处于绝热状态）。</div>`;
+        } else if (overLimit) {
+          warnHtml = `<div class="mt-3 bg-red-50 border border-red-200 text-red-700 rounded-md p-3 text-sm"><i class="fa fa-exclamation-triangle mr-1"></i>稳态温度 ${fmt(tsC)}°C 已超过 ${mat.name} 耐温上限 ${mat.tmax}°C，存在烧毁风险，请降低功率或增大散热。</div>`;
+        } else if (rWarn) {
+          warnHtml = `<div class="mt-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md p-3 text-sm"><i class="fa fa-info-circle mr-1"></i>${rWarn}</div>`;
+        }
+
+        dom.resultContainer.classList.remove('hidden');
+        dom.resultPlaceholder.classList.add('hidden');
+
+        const TIR = !isFinite(dT) ? '-' : fmt(dT);
+        const TS = !isFinite(tsC) ? '-' : fmt(tsC);
+
+        dom.resultContent.innerHTML = `
+          <div class="mb-3"><span class="text-gray-700">预估温升：</span></div>
+          <div class="flex items-baseline mb-4">
+            <span class="result-value text-3xl">${TIR}</span>
+            <span class="text-gray-700 ml-2 text-lg">°C（K）</span>
+            <span class="text-gray-500 ml-4 text-sm">稳态表面温度 ≈ <strong>${TS} °C</strong></span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mb-4 text-center">
+            <div class="bg-gray-50 rounded-md p-3">
+              <div class="text-xs text-gray-500 mb-1">发热功率</div>
+              <div class="font-semibold text-gray-800">${fmt(power)} <span class="text-xs">W</span></div>
+            </div>
+            <div class="bg-gray-50 rounded-md p-3">
+              <div class="text-xs text-gray-500 mb-1">热流密度</div>
+              <div class="font-semibold text-gray-800">${fmt(heatFlux)} <span class="text-xs">W/cm²</span></div>
+            </div>
+            <div class="bg-gray-50 rounded-md p-3">
+              <div class="text-xs text-gray-500 mb-1">等效电阻</div>
+              <div class="font-semibold text-gray-800">${fmt(rCalc)} <span class="text-xs">Ω</span></div>
+            </div>
+            <div class="bg-gray-50 rounded-md p-3">
+              <div class="text-xs text-gray-500 mb-1">辐射散热占比</div>
+              <div class="font-semibold text-gray-800">${fmt(radPct)} <span class="text-xs">%</span></div>
+            </div>
+          </div>
+
+          <div class="text-sm text-gray-600 bg-gray-50 rounded-md p-3">
+            <div>材质：<strong>${mat.name}</strong>（ε=${mat.emis}）　散热：<strong>${cool.name}</strong>　h=${fmt(h)} W/(m²·K)</div>
+            <div class="mt-1">发热面积：${fmt(areaRaw)} ${dom.areaUnit.options[dom.areaUnit.selectedIndex].text}　环境温度：${fmt(taC)} °C　功率来源：${pSource}</div>
+          </div>
+          ${warnHtml}
+        `;
+
+        dom.formulaDisplay.textContent =
+          `${pFormula}\n` +
+          `P = A × [ h·ΔT + ε·σ·((Ta+ΔT)⁴ − Ta⁴) ]\n` +
+          `   = ${fmt(areaM2)} m² × [ ${fmt(h)}·ΔT + ${mat.emis}·5.67e-8·((Ta+ΔT)⁴ − Ta⁴) ]\n` +
+          `解得 ΔT ≈ ${TIR} K　→　Ts = Ta + ΔT = ${fmt(taC)} + ${TIR} = ${TS} °C`;
+      }
+
+      function resetForm() {
+        dom.areaValue.value = '';
+        dom.areaUnit.value = 'cm2';
+        dom.volt.value = '';
+        dom.currentValue.value = '';
+        dom.currentUnit.value = 'A';
+        dom.resistance.value = '';
+        dom.ta.value = '25';
+        dom.material.value = 'graphene';
+        dom.cooling.value = 'natural_up';
+        dom.hconv.value = '';
+        dom.resultContainer.classList.add('hidden');
+        dom.resultPlaceholder.classList.remove('hidden');
+        dom.resultContent.innerHTML = '';
+        dom.formulaDisplay.textContent = '';
+      }
+
+      // ====================== 事件 ======================
+      dom.form.addEventListener('submit', function (e) { e.preventDefault(); calculate(); });
+
+      [dom.areaValue, dom.volt, dom.currentValue, dom.resistance, dom.ta, dom.hconv].forEach(function (input) {
+        input.addEventListener('input', function () {
+          const filtered = filterIllegalCharacters(this.value);
+          if (this.value !== filtered) {
+            const pos = this.selectionStart;
+            this.value = filtered;
+            this.selectionStart = this.selectionEnd = Math.min(pos, filtered.length);
+          }
+          if (parseNumber(dom.areaValue.value) > 0) calculate();
+        });
+      });
+      [dom.areaUnit, dom.currentUnit, dom.material, dom.cooling].forEach(function (sel) {
+        sel.addEventListener('change', function () { if (parseNumber(dom.areaValue.value) > 0) calculate(); });
+      });
+      dom.resetBtn.addEventListener('click', resetForm);
+    });
+  </script>
+</body>
+</html>
