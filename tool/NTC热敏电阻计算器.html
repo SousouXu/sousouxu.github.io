@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NTC 热敏电阻计算器 | Angus</title>
+  <!-- 外部资源 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+  <!-- Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',
+            secondary: '#64748b',
+            success: '#10b981',
+            danger: '#ef4444',
+            warning: '#f59e0b',
+            info: '#06b6d4',
+            light: '#f3f4f6',
+            dark: '#1f2937',
+            angus: '#2563eb'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto { content-visibility: auto; }
+      .transition-all-300 { transition: all 0.3s ease; }
+      .input-focus {
+        @apply focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none;
+      }
+      .btn {
+        @apply px-4 py-2 rounded-md font-medium transition-all-300 focus:outline-none focus:ring-2 focus:ring-offset-2;
+      }
+      .btn-primary { @apply bg-primary text-white hover:bg-blue-600 focus:ring-blue-500; }
+      .btn-outline { @apply border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500; }
+      .card { @apply bg-white rounded-lg shadow-card p-6 transition-all-300 hover:shadow-card-hover; }
+      .form-label { @apply block text-sm font-medium text-gray-700 mb-1; }
+      .form-input { @apply w-full px-3 py-2 border border-gray-300 rounded-md input-focus; }
+      .form-group { @apply mb-4; }
+      .result-value { @apply text-2xl font-bold text-primary; }
+      .formula { @apply bg-gray-50 p-3 rounded-md font-mono text-sm my-2 overflow-x-auto whitespace-pre-wrap; }
+      .angus-signature { @apply text-angus font-medium; }
+      .tbl-scroll { @apply max-h-80 overflow-auto border border-gray-200 rounded-md; }
+      .reftable { @apply w-full text-sm border-collapse; }
+      .reftable th { @apply sticky top-0 bg-gray-100 text-gray-600 text-xs uppercase px-3 py-2 text-right; }
+      .reftable td { @apply border-b border-gray-100 px-3 py-1.5 text-right text-gray-700 tabular-nums; }
+      .reftable th:first-child, .reftable td:first-child { @apply text-left; }
+      .reftable tbody tr:nth-child(even) { @apply bg-gray-50; }
+      .reftable tbody tr.hi { @apply bg-blue-50 text-angus font-semibold; }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+  <div class="container mx-auto px-4 py-8">
+    <!-- 页面标题 - Angus标识 -->
+    <header class="text-center mb-8 relative">
+      <div class="absolute top-0 right-0 md:right-8 bg-angus/10 text-angus px-3 py-1 rounded-full text-sm font-medium">
+        <i class="fa fa-star mr-1"></i>Angus
+      </div>
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">
+        <i class="fa fa-thermometer-half text-angus mr-1"></i>
+        NTC 热敏电阻计算器
+        <span class="angus-signature text-xl ml-2">| Angus</span>
+      </h1>
+      <p class="text-gray-600">由 B 值/温度/阻值相互换算，覆盖 NTC 常用计算场景</p>
+    </header>
+
+    <!-- 主内容区 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- 左侧：计算表单 -->
+      <div class="card">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">计算参数</h2>
+
+        <div class="bg-blue-50 p-4 rounded-md border border-blue-200 mb-6">
+          <h3 class="text-blue-800 font-medium mb-2">计算说明</h3>
+          <p class="text-blue-700 text-sm">
+            输入任意<b>四个参数</b>，系统自动计算<b>第五个</b>。T1 一般为规格书的基准点（如 25℃ / R25）。<br>
+            <strong>输入规则：</strong>温度允许数字与小数点（℃）；阻值请选择单位 Ω / KΩ / MΩ（也可直接在数字后带 K/M，如 100K，会覆盖所选单位）；B 值为纯数字。已填满 4 个时，第 5 个输入框自动锁定。
+          </p>
+        </div>
+
+        <form id="calc-form">
+          <div class="form-group">
+            <label for="iT1" class="form-label">T1 温度 <span class="text-gray-400 font-normal text-xs">（基准温度点）</span></label>
+            <div class="relative">
+              <input id="iT1" type="text" class="form-input pr-10" placeholder="例如：25" autocomplete="off">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500">℃</span></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="iR1" class="form-label">T1 阻值 R1 <span class="text-gray-400 font-normal text-xs">（T1 温度下的阻值，即 R25 等）</span></label>
+            <div class="flex gap-2">
+              <input id="iR1" type="text" class="form-input flex-1 min-w-0" placeholder="例如：100" autocomplete="off">
+              <select id="uR1" class="w-24 px-3 py-2 border border-gray-300 rounded-md input-focus bg-white">
+                <option value="1">Ω</option>
+                <option value="1000" selected>KΩ</option>
+                <option value="1000000">MΩ</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="iB" class="form-label">热敏指数 B <span class="text-gray-400 font-normal text-xs">（材料常数，典型 3950）</span></label>
+            <div class="relative">
+              <input id="iB" type="text" class="form-input pr-10" placeholder="例如：3950" autocomplete="off">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500">K</span></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="iT2" class="form-label">T2 温度 <span class="text-gray-400 font-normal text-xs">（待求温度点）</span></label>
+            <div class="relative">
+              <input id="iT2" type="text" class="form-input pr-10" placeholder="例如：50" autocomplete="off">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-500">℃</span></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="iR2" class="form-label">T2 阻值 R2 <span class="text-gray-400 font-normal text-xs">（T2 温度下的阻值）</span></label>
+            <div class="flex gap-2">
+              <input id="iR2" type="text" class="form-input flex-1 min-w-0" placeholder="例如：35.88" autocomplete="off">
+              <select id="uR2" class="w-24 px-3 py-2 border border-gray-300 rounded-md input-focus bg-white">
+                <option value="1">Ω</option>
+                <option value="1000" selected>KΩ</option>
+                <option value="1000000">MΩ</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mt-6 space-y-4">
+            <button type="submit" class="btn btn-primary w-full"><i class="fa fa-calculator mr-2"></i>计算</button>
+            <button id="btnExample" type="button" class="btn btn-outline w-full"><i class="fa fa-lightbulb-o mr-2"></i>填入示例参数</button>
+            <button id="btnReset" type="button" class="btn btn-outline w-full"><i class="fa fa-refresh mr-2"></i>重置参数</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 右侧：结果 + 示意图 + 对应表 -->
+      <div>
+        <div class="card mb-6">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">计算结果</h2>
+          <div id="result-container" class="hidden">
+            <div id="result-content"></div>
+            <div id="formula-display" class="formula mt-4"></div>
+          </div>
+          <div id="result-placeholder" class="text-center py-8 text-gray-500">
+            <i class="fa fa-thermometer-half fa-3x mb-3"></i>
+            <p>请输入任意四个参数，自动计算第五个</p>
+          </div>
+        </div>
+
+        <!-- 参数关系示意图 -->
+        <div class="card mb-6">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">参数关系示意图</h2>
+          <div class="flex justify-center overflow-x-auto">
+            <svg viewBox="0 0 460 300" class="w-full max-w-md h-auto" font-family="Inter, system-ui, sans-serif" role="img" aria-label="NTC 温度—阻值特性示意">
+              <text x="230" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">NTC 温度 — 阻值特性</text>
+              <line x1="60" y1="245" x2="420" y2="245" stroke="#c9d2da" stroke-width="1.5"></line>
+              <line x1="60" y1="245" x2="60" y2="45" stroke="#c9d2da" stroke-width="1.5"></line>
+              <text x="240" y="268" text-anchor="middle" font-size="11" fill="#6b7280">温度 T (℃) →</text>
+              <text x="22" y="150" text-anchor="middle" font-size="11" fill="#6b7280" transform="rotate(-90 22 150)">阻值 R (Ω) →</text>
+              <path d="M70,55 C130,70 180,120 230,160 C280,198 340,225 410,238" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"></path>
+              <circle cx="130" cy="112" r="4.5" fill="#1f6b1f"></circle>
+              <line x1="130" y1="112" x2="130" y2="245" stroke="#1f6b1f" stroke-width="1" stroke-dasharray="3 3"></line>
+              <text x="134" y="106" font-size="11" fill="#1f6b1f" font-weight="600">T1 / R1</text>
+              <circle cx="300" cy="182" r="4.5" fill="#c0392b"></circle>
+              <line x1="300" y1="182" x2="300" y2="245" stroke="#c0392b" stroke-width="1" stroke-dasharray="3 3"></line>
+              <text x="304" y="176" font-size="11" fill="#c0392b" font-weight="600">T2 / R2</text>
+              <text x="100" y="288" font-size="10.5" fill="#8a94a0">温度升高 → 阻值下降（负温度系数）</text>
+            </svg>
+          </div>
+          <p class="text-sm text-gray-600 mt-4">
+            该示意展示 NTC 的<b>负温度系数</b>特性：已知 <b>B、T1、R1、T2、R2</b> 中任意三/四个，即可按公式求出其余。T1/R1 为基准点（如 25℃/R25），T2/R2 为待求点；温度升高时阻值单调下降。
+          </p>
+        </div>
+
+        <!-- 阻值 — 温度对应表 -->
+        <div class="card">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">阻值 — 温度对应表</h2>
+          <div class="flex items-center gap-3 mb-3 flex-wrap">
+            <span class="text-sm text-gray-600">基于当前参数（B / T1 / R1）：</span>
+            <select id="refStep" class="border border-gray-300 rounded-md px-2 py-1.5 text-sm input-focus">
+              <option value="5">每 5℃</option>
+              <option value="10" selected>每 10℃</option>
+              <option value="20">每 20℃</option>
+            </select>
+            <span id="refInfo" class="text-xs text-gray-500">（参数不全，暂用 B=3950 / T1=25℃ / R1=100KΩ）</span>
+          </div>
+          <div class="tbl-scroll">
+            <table class="reftable">
+              <thead><tr><th>温度 (℃)</th><th>温度 (K)</th><th>阻值</th></tr></thead>
+              <tbody id="refBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 使用说明和公式解释 -->
+    <div class="mt-8 card">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">使用说明</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="text-lg font-medium text-gray-800 mb-2">如何使用</h3>
+          <ol class="list-decimal list-inside space-y-2 text-gray-700">
+            <li>输入任意四个参数（阻值可选单位 Ω / KΩ / MΩ，默认 KΩ）</li>
+            <li>保持恰好四个参数，系统自动求第五个并锁定多余输入框</li>
+            <li>可用组合：① B+T1+R1+T2 → R2　② T1+R1+T2+R2 → B　③ B+T1+R1+R2 → T2</li>
+            <li>点"填入示例参数"可快速体验；"重置参数"清空全部</li>
+            <li>下方"阻值—温度对应表"会随参数实时刷新</li>
+          </ol>
+        </div>
+        <div>
+          <h3 class="text-lg font-medium text-gray-800 mb-2">公式说明</h3>
+          <p class="text-gray-700 mb-2">核心计算公式：</p>
+          <div class="formula">① 由 B 求阻值：R2 = R1 × EXP[ B × (1/T2 − 1/T1) ]
+② 由实测求 B：B = LN(R1 / R2) × [ (T1 × T2) / (T2 − T1) ]
+③ 由阻值求温度：T2 = 1 / [ 1/T1 + LN(R2 / R1) / B ]</div>
+          <p class="text-sm text-gray-600 mt-2">
+            温度一律换算为开尔文（K = ℃ + 273.15）计算；该 B 值模型为单点近似，全温区精度有限，高精度场合建议使用规格书的分段参数或查表。
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="mt-8 text-center">
+      <div class="bg-angus/5 rounded-lg p-4 mb-4">
+        <p class="angus-signature text-lg font-medium mb-1">
+          <i class="fa fa-code mr-2"></i>Angus
+        </p>
+        <p class="text-gray-600 text-sm">专注于电子工程工具开发 | 精准 · 高效 · 易用</p>
+      </div>
+      <p class="text-gray-500 text-sm">© 2026 NTC 热敏电阻计算器 | 用于 NTC 阻值/B 值/温度的快速换算</p>
+    </footer>
+  </div>
+
+  <!-- JavaScript 逻辑 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const K = 273.15;
+      const FIELDS = ['iB', 'iT1', 'iR1', 'iT2', 'iR2'];
+      const $ = id => document.getElementById(id);
+
+      const dom = {
+        form: document.getElementById('calc-form'),
+        resultContainer: document.getElementById('result-container'),
+        resultContent: document.getElementById('result-content'),
+        formulaDisplay: document.getElementById('formula-display'),
+        resultPlaceholder: document.getElementById('result-placeholder'),
+        refBody: document.getElementById('refBody'),
+        refInfo: document.getElementById('refInfo'),
+        refStep: document.getElementById('refStep'),
+        uR1: document.getElementById('uR1'),
+        uR2: document.getElementById('uR2')
+      };
+
+      // ---------- 解析 ----------
+      function parseR(str, unit) {
+        if (str == null) return NaN;
+        let s = str.trim().replace(/[，,]/g, '').replace(/\s+/g, '')
+          .replace(/[０-９．]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+        if (s === '') return NaN;
+        s = s.replace(/[ΩΩ欧]$/, '');
+        const m = s.match(/^([+-]?(?:\d+\.?\d*|\.\d+))(k|m)?$/i);
+        if (!m) return NaN;
+        let v = Number(m[1]);
+        if (!isFinite(v)) return NaN;
+        const u = (m[2] || '').toLowerCase();
+        if (u === 'm') v *= 1e6;
+        else if (u === 'k') v *= 1e3;
+        else if (unit && unit > 0) v *= unit; // 使用所选单位
+        return v;
+      }
+      function parseNum(str) {
+        if (str == null) return NaN;
+        const s = str.trim().replace(/[，,]/g, '')
+          .replace(/[０-９．]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+        if (s === '') return NaN;
+        const v = Number(s);
+        return isFinite(v) ? v : NaN;
+      }
+      function trim(n, d) {
+        let s = n.toFixed(d);
+        if (s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, '');
+        return s;
+      }
+      function fmtR(ohm) {
+        if (!isFinite(ohm)) return '—';
+        const a = Math.abs(ohm);
+        if (a >= 1e6) return trim(ohm / 1e6, 6) + ' MΩ';
+        if (a >= 1e3) return trim(ohm / 1e3, 6) + ' KΩ';
+        return trim(ohm, 4) + ' Ω';
+      }
+      function fmtT(c) { return trim(c, 4) + ' ℃'; }
+      function fmtB(b) { return trim(b, 4); }
+
+      // ---------- 结果渲染 ----------
+      function placeholder() {
+        dom.resultContainer.classList.add('hidden');
+        dom.resultPlaceholder.classList.remove('hidden');
+        dom.resultContent.innerHTML = '';
+        dom.formulaDisplay.textContent = '';
+      }
+      function showTip(html) {
+        dom.resultContainer.classList.remove('hidden');
+        dom.resultPlaceholder.classList.add('hidden');
+        dom.resultContent.innerHTML = `<div class="flex flex-col items-center py-6 text-gray-500"><i class="fa fa-info-circle fa-2x mb-3 text-warning"></i><p>${html}</p></div>`;
+        dom.formulaDisplay.textContent = '';
+      }
+      function showResult(solvedName, solvedVal, rows, tipHTML, formulaText) {
+        dom.resultContainer.classList.remove('hidden');
+        dom.resultPlaceholder.classList.add('hidden');
+        const rowsHtml = rows.map(r =>
+          `<tr><td class="px-3 py-2 text-gray-600 bg-gray-50 w-1/2 border-b border-gray-100">${r[0]}</td><td class="px-3 py-2 text-right font-semibold text-gray-800 border-b border-gray-100">${r[1]}</td></tr>`
+        ).join('');
+        dom.resultContent.innerHTML = `
+          <div class="mb-2"><span class="text-gray-700">求解结果：</span></div>
+          <div class="flex items-baseline mb-4">
+            <span class="text-gray-700 mr-2">${solvedName} =</span>
+            <span class="result-value text-3xl text-success">${solvedVal}</span>
+          </div>
+          <div class="border border-gray-200 rounded-md overflow-hidden">
+            <table class="min-w-full text-sm"><tbody class="bg-white">${rowsHtml}</tbody></table>
+          </div>
+          <div class="mt-3">${tipHTML}</div>
+        `;
+        dom.formulaDisplay.textContent = formulaText;
+      }
+      function showError(msg) {
+        dom.resultContainer.classList.remove('hidden');
+        dom.resultPlaceholder.classList.add('hidden');
+        dom.resultContent.innerHTML = `<div class="flex items-start text-danger bg-red-50 border border-red-200 rounded-md p-3 text-sm"><i class="fa fa-exclamation-circle mr-2 mt-0.5"></i><div>${msg.replace(/\n/g, '<br>')}</div></div>`;
+        dom.formulaDisplay.textContent = '';
+      }
+
+      // ---------- 锁定状态（内联样式，避免类冲突） ----------
+      function setLocked(inp, mode) {
+        if (mode === 'solved') {
+          inp.readOnly = true;
+          inp.style.background = '#f0fdf4'; inp.style.borderColor = '#4ade80';
+          inp.style.color = '#166534'; inp.style.fontWeight = '700'; inp.style.fontStyle = 'normal';
+        } else if (mode === 'locked') {
+          inp.readOnly = true;
+          inp.style.background = '#f9fafb'; inp.style.borderColor = '#d1d5db';
+          inp.style.color = '#9ca3af'; inp.style.fontWeight = ''; inp.style.fontStyle = 'italic';
+          inp.placeholder = '已填满 4 个，此处将自动计算';
+        } else {
+          inp.readOnly = false;
+          inp.style.background = ''; inp.style.borderColor = '';
+          inp.style.color = ''; inp.style.fontWeight = ''; inp.style.fontStyle = '';
+          inp.placeholder = inp.getAttribute('data-ph') || '';
+        }
+      }
+      function updateLock() {
+        const full = FIELDS.filter(id => $(id).value.trim() !== '').length >= 4;
+        FIELDS.forEach(id => {
+          const inp = $(id);
+          if (full && inp.value.trim() === '') setLocked(inp, 'locked');
+          else setLocked(inp, 'normal');
+        });
+      }
+      function lockOnly(id) {
+        FIELDS.forEach(x => { if (x !== id) setLocked($(x), 'normal'); });
+        setLocked($(id), 'solved');
+      }
+
+      // ---------- 计算 ----------
+      function compute() {
+        const sB = $('iB').value, sT1 = $('iT1').value, sR1 = $('iR1').value, sT2 = $('iT2').value, sR2 = $('iR2').value;
+        const hasB = sB.trim() !== '', hasT1 = sT1.trim() !== '', hasR1 = sR1.trim() !== '', hasT2 = sT2.trim() !== '', hasR2 = sR2.trim() !== '';
+        const filled = [hasB, hasT1, hasR1, hasT2, hasR2].filter(Boolean).length;
+        if (filled === 0) { placeholder(); return; }
+
+        const B = parseNum(sB), T1 = parseNum(sT1), T2 = parseNum(sT2);
+        const R1 = parseR(sR1, Number(dom.uR1.value)), R2 = parseR(sR2, Number(dom.uR2.value));
+
+        const bad = [];
+        if (hasB && !isFinite(B)) bad.push('B 值');
+        if (hasT1 && !isFinite(T1)) bad.push('T1 温度');
+        if (hasR1 && !isFinite(R1)) bad.push('T1 阻值 R1');
+        if (hasT2 && !isFinite(T2)) bad.push('T2 温度');
+        if (hasR2 && !isFinite(R2)) bad.push('T2 阻值 R2');
+        if (bad.length) { showError('以下字段格式无效，请检查：' + bad.join('、')); return; }
+        if (filled < 4) { showError('至少需要填写 4 个参数中的 3 个才能求解（当前已填 ' + filled + ' 个）。'); return; }
+
+        const t1k = T1 + K, t2k = T2 + K;
+        let solvedName, solvedVal, rows, tipHTML, formulaText;
+
+        if (hasB && hasT1 && hasR1 && hasT2 && !hasR2) {
+          if (t1k <= 0 || t2k <= 0) { showError('温度不能低于 −273.15 ℃。'); return; }
+          const val = R1 * Math.exp(B * (1 / t2k - 1 / t1k));
+          solvedName = 'T2 阻值 R2'; solvedVal = fmtR(val);
+          rows = [['热敏指数 B', fmtB(B) + ' K'], ['T1 温度', fmtT(T1) + '（' + trim(t1k, 4) + ' K）'], ['T1 阻值 R1', fmtR(R1)], ['T2 温度', fmtT(T2) + '（' + trim(t2k, 4) + ' K）'], ['T2 阻值 R2', '<b>' + solvedVal + '</b>']];
+          tipHTML = '<div class="text-sm text-green-800 bg-green-50 border border-green-200 rounded-md p-3">计算式：R2 = R1 × EXP[ B × (1/T2 − 1/T1) ]</div>';
+          formulaText = 'R2 = R1 × EXP[ B × (1/T2 − 1/T1) ]';
+          lockOnly('iR2');
+        } else if (!hasB && hasT1 && hasR1 && hasT2 && hasR2) {
+          if (R1 <= 0 || R2 <= 0) { showError('阻值必须大于 0。'); return; }
+          if (t2k === t1k) { showError('T1 与 T2 不能相同，否则无法求解 B。'); return; }
+          const bv = Math.log(R1 / R2) * ((t1k * t2k) / (t2k - t1k));
+          solvedName = '热敏指数 B'; solvedVal = fmtB(bv) + ' K';
+          rows = [['T1 温度', fmtT(T1) + '（' + trim(t1k, 4) + ' K）'], ['T1 阻值 R1', fmtR(R1)], ['T2 温度', fmtT(T2) + '（' + trim(t2k, 4) + ' K）'], ['T2 阻值 R2', fmtR(R2)], ['热敏指数 B', '<b>' + solvedVal + '</b>']];
+          tipHTML = '<div class="text-sm text-green-800 bg-green-50 border border-green-200 rounded-md p-3">计算式：B = LN(R1 / R2) × [ (T1 × T2) / (T2 − T1) ]</div>';
+          formulaText = 'B = LN(R1 / R2) × [ (T1 × T2) / (T2 − T1) ]';
+          lockOnly('iB');
+        } else if (hasB && hasT1 && hasR1 && !hasT2 && hasR2) {
+          if (B <= 0) { showError('热敏指数 B 必须大于 0。'); return; }
+          if (R1 <= 0 || R2 <= 0) { showError('阻值必须大于 0。'); return; }
+          if (t1k <= 0) { showError('T1 温度不能低于 −273.15 ℃。'); return; }
+          const invT2 = 1 / t1k + Math.log(R2 / R1) / B;
+          if (invT2 <= 0) { showError('参数组合无解，请检查数值。'); return; }
+          const t2kv = 1 / invT2, t2c = t2kv - K;
+          solvedName = 'T2 温度'; solvedVal = fmtT(t2c) + '（' + trim(t2kv, 4) + ' K）';
+          rows = [['热敏指数 B', fmtB(B) + ' K'], ['T1 温度', fmtT(T1) + '（' + trim(t1k, 4) + ' K）'], ['T1 阻值 R1', fmtR(R1)], ['T2 阻值 R2', fmtR(R2)], ['T2 温度', '<b>' + fmtT(t2c) + '</b>']];
+          tipHTML = '<div class="text-sm text-green-800 bg-green-50 border border-green-200 rounded-md p-3">计算式：T2 = 1 / [ 1/T1 + LN(R2 / R1) / B ]</div>';
+          formulaText = 'T2 = 1 / [ 1/T1 + LN(R2 / R1) / B ]';
+          lockOnly('iT2');
+        } else {
+          showError('当前填写的参数组合无法求解。\n可用组合：\n① B、T1、R1、T2 → 求 R2\n② T1、R1、T2、R2 → 求 B\n③ B、T1、R1、R2 → 求 T2');
+          return;
+        }
+
+        showResult(solvedName, solvedVal, rows, tipHTML, formulaText);
+      }
+
+      // ---------- 阻值—温度对应表 ----------
+      function buildRef() {
+        let B = parseNum($('iB').value);
+        let T1 = parseNum($('iT1').value);
+        let R1 = parseR($('iR1').value, Number(dom.uR1.value));
+        const usedDefault = (!isFinite(B) || B <= 0) || !isFinite(T1) || (!isFinite(R1) || R1 <= 0);
+        if (!isFinite(B) || B <= 0) B = 3950;
+        if (!isFinite(T1)) T1 = 25;
+        if (!isFinite(R1) || R1 <= 0) R1 = 100e3;
+
+        const step = Number(dom.refStep.value) || 10;
+        const t1k = T1 + K;
+        let lo = -40, hi = 125;
+        if (lo % step !== 0) lo = Math.floor(lo / step) * step;
+
+        const temps = [];
+        for (let t = lo; t <= hi; t += step) temps.push(t);
+        if (!temps.some(x => Math.abs(x - T1) < 0.01)) { temps.push(T1); temps.sort((a, b) => a - b); }
+
+        let html = '';
+        temps.forEach(t => {
+          const tk = t + K;
+          if (tk <= 0) return;
+          const r = R1 * Math.exp(B * (1 / tk - 1 / t1k));
+          const hiRow = Math.abs(t - T1) < 0.01 ? ' class="hi"' : '';
+          html += `<tr${hiRow}><td>${trim(t, 2)}</td><td>${trim(tk, 2)}</td><td>${fmtR(r)}</td></tr>`;
+        });
+        dom.refBody.innerHTML = html;
+        dom.refInfo.textContent = usedDefault
+          ? '（参数不全，暂用 B=3950 / T1=25℃ / R1=100KΩ）'
+          : ('B=' + trim(B, 2) + ' T1=' + trim(T1, 2) + '℃ R1=' + fmtR(R1));
+      }
+
+      // ---------- 事件 ----------
+      FIELDS.forEach(id => { $(id).setAttribute('data-ph', $(id).getAttribute('placeholder') || ''); });
+
+      dom.form.addEventListener('submit', function (e) { e.preventDefault(); updateLock(); compute(); });
+
+      FIELDS.forEach(id => {
+        const inp = $(id);
+        inp.addEventListener('input', function () {
+          updateLock();
+          buildRef();
+          const filled = FIELDS.filter(x => $(x).value.trim() !== '').length;
+          if (filled >= 4) compute(); else placeholder();
+        });
+        inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); updateLock(); compute(); } });
+      });
+
+      document.getElementById('btnExample').addEventListener('click', function () {
+        $('iB').value = '3950'; $('iT1').value = '25'; $('iR1').value = '100'; $('iT2').value = '50'; $('iR2').value = '';
+        dom.uR1.value = '1000'; dom.uR2.value = '1000';
+        FIELDS.forEach(id => setLocked($(id), 'normal'));
+        updateLock(); buildRef(); compute();
+      });
+      document.getElementById('btnReset').addEventListener('click', function () {
+        FIELDS.forEach(id => { $(id).value = ''; setLocked($(id), 'normal'); });
+        dom.uR1.value = '1000'; dom.uR2.value = '1000';
+        updateLock(); buildRef(); placeholder();
+      });
+      dom.refStep.addEventListener('change', buildRef);
+      [dom.uR1, dom.uR2].forEach(sel => sel.addEventListener('change', function () {
+        updateLock(); buildRef();
+        const filled = FIELDS.filter(x => $(x).value.trim() !== '').length;
+        if (filled >= 4) compute(); else placeholder();
+      }));
+
+      // 初始化
+      updateLock();
+      buildRef();
+    });
+  </script>
+</body>
+</html>
