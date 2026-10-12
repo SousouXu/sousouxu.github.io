@@ -122,6 +122,7 @@
               输入电池容量、设备功耗和转换损耗，系统将自动换算出预估使用时间。<br>
               <strong>容量单位：</strong>mAh / Ah 需要提供电池电压，Wh 为能量单位无需电压。<br>
               <strong>功率单位：</strong>mA 会按电池电压换算为功率。<br>
+              <strong>待机功耗：</strong>选填；结合“每日使用时长”按 24 小时工作+待机估算平均功耗。<br>
               <strong>转换损耗：</strong>指升压/降压转换器的能量损失，例如效率 85% 对应损耗 15%。
             </p>
           </div>
@@ -153,9 +154,9 @@
             <p id="volt-hint" class="text-xs text-gray-500 mt-1">容量为 mAh / Ah 时必填（锂电池通常 3.7V / 3.8V）。</p>
           </div>
 
-          <!-- 设备功耗 -->
+          <!-- 工作功耗 -->
           <div class="form-group">
-            <label for="power-value" class="form-label">设备功耗 (Power)：</label>
+            <label for="power-value" class="form-label">工作功耗 (Active Power)：</label>
             <div class="flex gap-2 items-stretch">
               <input type="text" id="power-value" class="form-input flex-1 min-w-0" placeholder="例如：2.5" data-type="number">
               <select id="power-unit" class="unit-select" style="width:6.5rem">
@@ -164,7 +165,23 @@
                 <option value="mA">mA</option>
               </select>
             </div>
-            <p class="text-xs text-gray-500 mt-1">选择 mA 时，将按电池电压换算成功耗。</p>
+            <p class="text-xs text-gray-500 mt-1">设备工作 / 亮屏时的功耗；选 mA 时按电池电压换算。</p>
+          </div>
+
+          <!-- 待机功耗 -->
+          <div class="form-group">
+            <label for="standby-value" class="form-label">待机功耗 (Standby Power)：<span class="text-xs text-gray-400 font-normal">选填</span></label>
+            <div class="flex gap-2 items-stretch">
+              <input type="text" id="standby-value" class="form-input flex-1 min-w-0" placeholder="例如：0.01" data-type="number">
+              <select id="standby-unit" class="unit-select" style="width:6.5rem">
+                <option value="W" selected>W</option>
+                <option value="mW">mW</option>
+                <option value="uW">µW</option>
+                <option value="mA">mA</option>
+                <option value="uA">µA</option>
+              </select>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">选填。设备休眠 / 待机时的功耗；选 mA / µA 时按电池电压换算。结合“每日使用时长”，其余时间按待机功耗计入平均功耗。</p>
           </div>
 
           <!-- 转换损耗 -->
@@ -189,7 +206,7 @@
                 <option value="second">秒</option>
               </select>
             </div>
-            <p class="text-xs text-gray-500 mt-1">选填。填写后额外给出按该用量估算的“可用天数”。</p>
+            <p class="text-xs text-gray-500 mt-1">选填。即每日处于“工作功耗”状态的时间（不超过 24 小时）；填写待机功耗后，其余时间按待机功耗计算。</p>
           </div>
 
           <!-- 输出时间单位 -->
@@ -326,7 +343,8 @@
           <ol class="list-decimal list-inside space-y-2 text-gray-700">
             <li>输入电池容量并选择单位（mAh / Ah / Wh）</li>
             <li>若容量选择 mAh / Ah，请填写电池标称电压（锂电池一般 3.7V）</li>
-            <li>输入设备功耗并选择单位（W / mW / mA）</li>
+            <li>输入工作功耗并选择单位（W / mW / mA）</li>
+            <li>（选填）填写待机功耗，并将“每日使用时长”作为每日工作时间，其余时间按待机功耗计入平均功耗</li>
             <li>填写转换损耗百分比（效率 85% → 损耗 15%）</li>
             <li>（选填）填写每日使用时长，可得到"可用天数"</li>
             <li>选择输出时间单位，或使用"自动"智能匹配</li>
@@ -339,7 +357,8 @@
           <div class="formula">电池能量 E(Wh) = 容量(mAh) × 电压(V) ÷ 1000
 电池能量 E(Wh) = 容量(Ah) × 电压(V)
 有效能量 = E × (1 − 损耗%)
-使用时间(h) = 有效能量 ÷ 设备功耗(W)
+平均功耗(W) = [工作功耗 × 每日工作时长 + 待机功耗 × (24 − 每日工作时长)] ÷ 24
+使用时间(h) = 有效能量 ÷ 平均功耗(W)
 可用天数 = 使用时间 ÷ 每日使用时长</div>
           <p class="text-sm text-gray-600 mt-2">
             先由电池容量与电压求得电池总能量，扣除转换损耗得到可用能量，再除以设备功耗即为预估使用时间。
@@ -385,6 +404,8 @@
         voltHint: document.getElementById('volt-hint'),
         powerValue: document.getElementById('power-value'),
         powerUnit: document.getElementById('power-unit'),
+        standbyValue: document.getElementById('standby-value'),
+        standbyUnit: document.getElementById('standby-unit'),
         loss: document.getElementById('loss'),
         dailyValue: document.getElementById('daily-value'),
         dailyUnit: document.getElementById('daily-unit'),
@@ -472,9 +493,9 @@
           ? '容量为 mAh / Ah 时必填（锂电池通常 3.7V / 3.8V）。'
           : '容量为 Wh 时无需电压，此项已自动忽略。';
 
-        // 功耗为 mA 时也需要电压
-        if (dom.powerUnit.value === 'mA' && !needVolt) {
-          dom.voltHint.textContent = '功耗单位为 mA 时也需要电压，请填写电池电压。';
+        // 功耗/待机为 mA 时也需要电压
+        if (!needVolt && (dom.powerUnit.value === 'mA' || (parseNumber(dom.standbyValue.value) > 0 && (dom.standbyUnit.value === 'mA' || dom.standbyUnit.value === 'uA')))) {
+          dom.voltHint.textContent = '功耗/待机单位为 mA 时也需要电压，请填写电池电压。';
         }
       }
 
@@ -487,6 +508,8 @@
         const volt = parseNumber(dom.volt.value);
         const powerValue = parseNumber(dom.powerValue.value);
         const powerUnit = dom.powerUnit.value;
+        const standbyValue = parseNumber(dom.standbyValue.value);
+        const standbyUnit = dom.standbyUnit.value;
         const lossPct = parseNumber(dom.loss.value);
         const dailyValue = parseNumber(dom.dailyValue.value);
         const dailyUnitKey = dom.dailyUnit.value;
@@ -498,8 +521,9 @@
         if (powerValue <= 0) { showMessage('请输入有效的设备功耗', 'warning'); return; }
         if (lossPct < 0 || lossPct >= 100) { showMessage('转换损耗应在 0 ~ 100% 之间', 'danger'); return; }
 
-        const needVolt = (capUnit === 'mAh' || capUnit === 'Ah' || powerUnit === 'mA');
+        const needVolt = (capUnit === 'mAh' || capUnit === 'Ah' || powerUnit === 'mA' || (standbyValue > 0 && (standbyUnit === 'mA' || standbyUnit === 'uA')));
         if (needVolt && volt <= 0) { showMessage('请填写有效的电池电压', 'warning'); return; }
+        if (dailyValue > 0 && dailySeconds > 24 * 3600) { showMessage('每日工作时长不能超过 24 小时', 'danger'); return; }
 
         try {
           // ---- 1. 电池总能量 E (Wh) ----
@@ -528,9 +552,33 @@
             powerFormula = `P = ${powerValue} mA × ${volt} V ÷ 1000 = ${fmt(powerW)} W`;
           }
 
+          // ---- 2b. 待机功耗 (W) ----
+          let standbyW = 0;
+          if (standbyValue > 0) {
+            if (standbyUnit === 'W') standbyW = standbyValue;
+            else if (standbyUnit === 'mW') standbyW = standbyValue / 1e3;
+            else if (standbyUnit === 'uW') standbyW = standbyValue / 1e6;
+            else if (standbyUnit === 'mA') standbyW = standbyValue * volt / 1e3;
+            else standbyW = standbyValue * volt / 1e6; // uA
+          }
+
+          // ---- 2c. 平均功耗（工作 + 待机） ----
+          const standbyActive = standbyW > 0 && dailySeconds > 0;
+          let avgPowerW = powerW;
+          let standbyNote = '';
+          if (standbyActive) {
+            const activeHours = Math.min(dailySeconds / 3600, 24);
+            const idleHours = Math.max(24 - activeHours, 0);
+            const dailyWh = powerW * activeHours + standbyW * idleHours;
+            avgPowerW = dailyWh / 24;
+            standbyNote = `；平均功耗 = [工作 ${fmt(powerW)} W × ${fmt(activeHours)} h + 待机 ${fmt(standbyW)} W × ${fmt(idleHours)} h] ÷ 24 = <strong>${fmt(avgPowerW)} W</strong>`;
+          } else if (standbyW > 0) {
+            standbyNote = '（已填写待机功耗，但未填写“每日使用时长”，待机功耗未计入续航）';
+          }
+
           // ---- 3. 有效能量与使用时间 ----
           const usableWh = energyWh * (1 - lossPct / 100);
-          const hours = usableWh / powerW;
+          const hours = usableWh / avgPowerW;
           const totalSeconds = hours * 3600;
 
           // ---- 4. 选择输出单位 ----
@@ -544,7 +592,11 @@
           const primaryValue = totalSeconds / primaryUnit.seconds;
 
           // ---- 5. 渲染结果 ----
-          const dailyDays = dailySeconds > 0 ? totalSeconds / dailySeconds : 0;
+          // 每日耗电量：工作时长按工作功耗；其余时间仅在填写待机功耗时按待机功耗计入
+          const activeHoursDaily = Math.min(dailySeconds / 3600, 24);
+          const idleHoursDaily = Math.max(24 - activeHoursDaily, 0);
+          const dailyEnergyWh = dailySeconds > 0 ? (powerW * activeHoursDaily + standbyW * idleHoursDaily) : 0;
+          const dailyDays = (dailySeconds > 0 && dailyEnergyWh > 0) ? usableWh / dailyEnergyWh : 0;
           const dailyHtml = dailySeconds > 0 ? `
             <div class="bg-green-50 border border-green-200 rounded-md p-3 mb-4">
               <div class="text-sm text-gray-600 mb-1">按每日使用 ${fmt(dailyValue)} ${DAILY_UNIT_LABEL[dailyUnitKey]} 估算：</div>
@@ -589,8 +641,8 @@
                 <div class="font-semibold text-gray-800">${fmt(usableWh)} <span class="text-xs">Wh</span></div>
               </div>
               <div class="bg-gray-50 rounded-md p-3">
-                <div class="text-xs text-gray-500 mb-1">设备功耗</div>
-                <div class="font-semibold text-gray-800">${fmt(powerW)} <span class="text-xs">W</span></div>
+                <div class="text-xs text-gray-500 mb-1">${standbyActive ? '平均功耗' : '工作功耗'}</div>
+                <div class="font-semibold text-gray-800">${fmt(standbyActive ? avgPowerW : powerW)} <span class="text-xs">W</span></div>
               </div>
             </div>
 
@@ -610,14 +662,15 @@
 
             <div class="actual-vout-note">
               <i class="fa fa-info-circle mr-1 text-info"></i>
-              计算过程：${energyFormula} → 有效能量 = ${fmt(energyWh)} × (1 − ${lossPct}%) = <strong>${fmt(usableWh)} Wh</strong>；${powerFormula} → 续航 = ${fmt(usableWh)} Wh ÷ ${fmt(powerW)} W = <strong>${fmt(hours)} 小时</strong>。${dailySeconds > 0 ? `按每日使用 ${fmt(dailyValue)} ${DAILY_UNIT_LABEL[dailyUnitKey]}，可用约 <strong>${fmt(dailyDays)} 天</strong>（${fmt(hours)} h ÷ ${fmt(dailySeconds / 3600)} h/天）。` : ''}
+              计算过程：${energyFormula} → 有效能量 = ${fmt(energyWh)} × (1 − ${lossPct}%) = <strong>${fmt(usableWh)} Wh</strong>；${powerFormula}${standbyNote} → 续航 = ${fmt(usableWh)} Wh ÷ ${fmt(avgPowerW)} W = <strong>${fmt(hours)} 小时</strong>。${dailySeconds > 0 ? `按每日使用 ${fmt(dailyValue)} ${DAILY_UNIT_LABEL[dailyUnitKey]}，每日耗电 ${fmt(dailyEnergyWh)} Wh，可用约 <strong>${fmt(dailyDays)} 天</strong>（有效能量 ${fmt(usableWh)} Wh ÷ ${fmt(dailyEnergyWh)} Wh/天）。` : ''}
             </div>
           `;
 
+          const powerLabel = standbyActive ? '平均功耗' : '设备功耗';
           dom.formulaDisplay.textContent =
-            `使用时间(h) = [电池总能量(Wh) × (1 − 损耗%)] ÷ 设备功耗(W)\n` +
-            `           = [${fmt(energyWh)} × (1 − ${lossPct}/100)] ÷ ${fmt(powerW)}\n` +
-            `           = ${fmt(usableWh)} ÷ ${fmt(powerW)} = ${fmt(hours)} 小时（${fmt(totalSeconds)} 秒）`;
+            `使用时间(h) = [电池总能量(Wh) × (1 − 损耗%)] ÷ ${powerLabel}(W)\n` +
+            `           = [${fmt(energyWh)} × (1 − ${lossPct}/100)] ÷ ${fmt(avgPowerW)}\n` +
+            `           = ${fmt(usableWh)} ÷ ${fmt(avgPowerW)} = ${fmt(hours)} 小时（${fmt(totalSeconds)} 秒）`;
 
         } catch (error) {
           showMessage(error.message, 'danger');
@@ -630,12 +683,14 @@
       function resetForm() {
         dom.capValue.value = '';
         dom.powerValue.value = '';
+        dom.standbyValue.value = '';
         dom.volt.value = '';
         dom.loss.value = '15';
         dom.dailyValue.value = '';
         dom.dailyUnit.value = 'hour';
         dom.capUnit.value = 'mAh';
         dom.powerUnit.value = 'W';
+        dom.standbyUnit.value = 'W';
         dom.outputUnit.value = 'auto';
 
         dom.resultContainer.classList.add('hidden');
@@ -653,7 +708,7 @@
       });
 
       // 实时过滤非法字符 + 自动计算
-      [dom.capValue, dom.volt, dom.powerValue, dom.loss, dom.dailyValue].forEach(function (input) {
+      [dom.capValue, dom.volt, dom.powerValue, dom.standbyValue, dom.loss, dom.dailyValue].forEach(function (input) {
         input.addEventListener('input', function () {
           const filtered = filterIllegalCharacters(this.value);
           if (this.value !== filtered) {
@@ -673,6 +728,10 @@
         if (parseNumber(dom.capValue.value) > 0 && parseNumber(dom.powerValue.value) > 0) calculate();
       });
       dom.powerUnit.addEventListener('change', function () {
+        updateFieldStates();
+        if (parseNumber(dom.capValue.value) > 0 && parseNumber(dom.powerValue.value) > 0) calculate();
+      });
+      dom.standbyUnit.addEventListener('change', function () {
         updateFieldStates();
         if (parseNumber(dom.capValue.value) > 0 && parseNumber(dom.powerValue.value) > 0) calculate();
       });
@@ -758,7 +817,7 @@
         const energy = batteryEnergyWh();
         const out = $('seg-result');
         if (energy <= 0) { out.innerHTML = '<div class="text-warning flex items-center"><i class="fa fa-info-circle mr-2"></i>请先在上方填写电池容量（mAh/Ah 还需电池电压）</div>'; return; }
-        let dailyWh = 0; let rowsUsed = 0; const detail = [];
+        let dailyWh = 0; let rowsUsed = 0; let totalHours = 0; let overLimit = false; const detail = [];
         Array.from(segRows.children).forEach(function (tr) {
           const pv = num(tr.querySelector('.seg-p').value);
           const pu = tr.querySelector('.seg-pu').value;
@@ -767,11 +826,14 @@
           if (pv > 0 && dv > 0) {
             const pW = powerToW(pv, pu);
             const hours = dv * (SEC[du] || 3600) / 3600;
+            if (hours > 24) overLimit = true;
+            totalHours += hours;
             const wh = pW * hours;
             dailyWh += wh; rowsUsed++;
             detail.push(`${fmtN(pW)}W × ${fmtN(hours)}h = ${fmtN(wh)}Wh`);
           }
         });
+        if (overLimit || totalHours > 24) { out.innerHTML = '<div class="text-danger flex items-center"><i class="fa fa-exclamation-circle mr-2"></i>每日工作时长不能超过 24 小时</div>'; return; }
         if (rowsUsed === 0 || dailyWh <= 0) { out.innerHTML = '<div class="text-warning flex items-center"><i class="fa fa-info-circle mr-2"></i>请至少填写一段有效的功耗与每日时长</div>'; return; }
         const usable = energy * (1 - lossPct() / 100);
         const days = usable / dailyWh;
